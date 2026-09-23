@@ -1,11 +1,13 @@
 // ============================================================
 //  pianyu-site / functions/api/videos.js
 //  GET  /api/videos   -> list (public; supports ?q= & ?tag=)
-//  POST /api/videos   -> create (admin only)
+//  POST /api/videos   -> create (islander SSO; owner = superuser)
+//                       video carries `author` attribution
 // ============================================================
 
 import { listVideos, saveVideos, newId, normalizeTags } from '../_lib/store.js';
-import { isAuthed, json } from '../_lib/auth.js';
+import { json } from '../_lib/auth.js';
+import { getActor } from '../_lib/actor.js';
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
@@ -31,7 +33,8 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!(await isAuthed(request, env))) return json({ ok: false, error: 'unauthorized' }, 401);
+  const actor = await getActor(request, env);
+  if (!actor) return json({ ok: false, error: 'unauthorized' }, 401);
 
   let body;
   try {
@@ -55,6 +58,9 @@ export async function onRequestPost({ request, env }) {
     source: body.source === 'embed' ? 'embed' : 'file',
     cover: String(body.cover || '').trim(),
     duration: String(body.duration || '').trim(),
+    author: actor.isOwner
+      ? { owner: true, name: actor.name || '站长' }
+      : { sub: actor.sub, login: actor.login, name: actor.name, avatar: actor.avatar },
     views: 0,
     createdAt: now,
     updatedAt: now,
