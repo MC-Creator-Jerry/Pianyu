@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理台 · 片屿</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/pianyu.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img class="logo" src="assets/favicon.svg" alt="片屿">
+      片屿<span class="sub">PIANYU</span>
+    </a>
+    <div class="spacer"></div>
+    <a class="btn sm" href="index.html">首页</a>
+    <button id="btnLogout" class="btn sm" style="display:none">退出</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- login -->
+  <section id="loginPanel" class="panel" style="max-width:420px">
+    <h2>管理员登录</h2>
+    <div class="field">
+      <label>密码</label>
+      <input id="pw" class="input" type="password" autocomplete="current-password" placeholder="管理员密码">
+    </div>
+    <button id="btnLogin" class="btn primary">登录</button>
+    <div id="loginMsg"></div>
+    <p class="hint" style="margin-top:12px">
+      密码由 Pages 密钥 <code>PIANYU_ADMIN_PASSWORD</code> 提供。若未设置，登录会返回
+      <code>not_configured</code>，需先执行：<br>
+      <code>wrangler pages secret put PIANYU_ADMIN_PASSWORD --project-name pianyu</code>
+    </p>
+  </section>
+
+  <!-- admin -->
+  <section id="adminPanel" style="display:none">
+    <div class="panel">
+      <h2 id="formTitle">添加视频</h2>
+      <input type="hidden" id="editId" value="">
+      <div class="field"><label>标题 *</label><input id="fTitle" class="input" placeholder="视频标题"></div>
+      <div class="field"><label>视频地址 *（外链）</label><input id="fUrl" class="input" placeholder="https://... 直链 mp4 或 嵌入页地址"></div>
+      <div class="row2">
+        <div class="field">
+          <label>来源类型</label>
+          <select id="fSource" class="select">
+            <option value="file">直链视频（mp4/webm…，用 &lt;video&gt; 播放）</option>
+            <option value="embed">嵌入页（B站/YouTube 等，用 &lt;iframe&gt; 播放）</option>
+          </select>
+        </div>
+        <div class="field"><label>时长（可选，如 03:24）</label><input id="fDuration" class="input" placeholder="03:24"></div>
+      </div>
+      <div class="field"><label>封面图地址（可选）</label><input id="fCover" class="input" placeholder="https://.../cover.jpg"></div>
+      <div class="field"><label>标签（逗号或空格分隔，可选）</label><input id="fTags" class="input" placeholder="电影, 旅行, 音乐"></div>
+      <div class="field"><label>简介（可选）</label><textarea id="fDesc" class="textarea"></textarea></div>
+      <button id="btnSave" class="btn primary">保存</button>
+      <button id="btnCancel" class="btn" style="display:none">取消编辑</button>
+      <div id="formMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>已有视频（<span id="cnt">0</span>）</h2>
+      <div id="list" class="admin-list"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer"><div class="wrap"><span>© 片屿 · PIANYU</span></div></footer>
+
+<script src="assets/pianyu.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const loginPanel = $('loginPanel'), adminPanel = $('adminPanel');
+
+  function msg(el, text, type) {
+    el.innerHTML = text ? `<div class="notice ${type || 'ok'}">${PY.esc(text)}</div>` : '';
+  }
+
+  async function refresh() {
+    const { data } = await PY.api('/api/videos');
+    const videos = (data && data.videos) || [];
+    $('cnt').textContent = videos.length;
+    const list = $('list');
+    list.innerHTML = '';
+    if (!videos.length) { list.innerHTML = '<p class="hint">还没有视频。</p>'; return; }
+    videos.forEach((v) => {
+      const row = document.createElement('div');
+      row.className = 'admin-item';
+      row.innerHTML = `
+        <div class="t">
+          <div class="n">${PY.esc(v.title)}</div>
+          <div class="u">${PY.esc(v.source)} · ${PY.esc(v.url)}</div>
+        </div>
+        <a class="btn sm" href="watch.html?id=${encodeURIComponent(v.id)}" target="_blank">看</a>
+        <button class="btn sm" data-edit="${v.id}">编辑</button>
+        <button class="btn sm danger" data-del="${v.id}">删除</button>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => startEdit(b.dataset.edit, videos));
+    list.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => del(b.dataset.del, videos));
+  }
+
+  function resetForm() {
+    $('editId').value = '';
+    $('fTitle').value = ''; $('fUrl').value = ''; $('fSource').value = 'file';
+    $('fDuration').value = ''; $('fCover').value = ''; $('fTags').value = ''; $('fDesc').value = '';
+    $('formTitle').textContent = '添加视频';
+    $('btnCancel').style.display = 'none';
+    msg($('formMsg'), '');
+  }
+
+  function startEdit(id, videos) {
+    const v = videos.find((x) => x.id === id);
+    if (!v) return;
+    $('editId').value = v.id;
+    $('fTitle').value = v.title || '';
+    $('fUrl').value = v.url || '';
+    $('fSource').value = v.source || 'file';
+    $('fDuration').value = v.duration || '';
+    $('fCover').value = v.cover || '';
+    $('fTags').value = (v.tags || []).join(', ');
+    $('fDesc').value = v.desc || '';
+    $('formTitle').textContent = '编辑视频';
+    $('btnCancel').style.display = 'inline-block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function del(id, videos) {
+    const v = videos.find((x) => x.id === id);
+    if (!confirm('确定删除「' + (v ? v.title : id) + '」？此操作不可撤销。')) return;
+    const { res, data } = await PY.api('/api/videos/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (res.ok) refresh();
+    else alert('删除失败：' + ((data && data.error) || res.status));
+  }
+
+  async function save() {
+    const id = $('editId').value;
+    const payload = {
+      title: $('fTitle').value.trim(),
+      url: $('fUrl').value.trim(),
+      source: $('fSource').value,
+      duration: $('fDuration').value.trim(),
+      cover: $('fCover').value.trim(),
+      tags: $('fTags').value,
+      desc: $('fDesc').value.trim(),
+    };
+    if (!payload.title || !payload.url) { msg($('formMsg'), '标题和视频地址必填', 'err'); return; }
+    const path = id ? '/api/videos/' + encodeURIComponent(id) : '/api/videos';
+    const method = id ? 'PATCH' : 'POST';
+    const { res, data } = await PY.api(path, { method, body: JSON.stringify(payload) });
+    if (res.ok) {
+      msg($('formMsg'), id ? '已更新' : '已添加', 'ok');
+      resetForm();
+      refresh();
+    } else {
+      msg($('formMsg'), '保存失败：' + ((data && data.error) || res.status), 'err');
+    }
+  }
+
+  async function showAdmin() {
+    loginPanel.style.display = 'none';
+    adminPanel.style.display = 'block';
+    $('btnLogout').style.display = 'inline-block';
+    resetForm();
+    refresh();
+  }
+
+  $('btnLogin').onclick = async () => {
+    const pw = $('pw').value;
+    const { res, data } = await PY.api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: pw }) });
+    if (res.ok) { $('pw').value = ''; msg($('loginMsg'), ''); showAdmin(); }
+    else msg($('loginMsg'), '登录失败：' + ((data && data.error) || res.status) + (data && data.hint ? ' — ' + data.hint : ''), 'err');
+  };
+  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btnLogin').click(); });
+
+  $('btnLogout').onclick = async () => {
+    await PY.api('/api/admin/logout', { method: 'POST' });
+    location.reload();
+  };
+
+  $('btnSave').onclick = save;
+  $('btnCancel').onclick = resetForm;
+
+  PY.isAdmin().then((ok) => { ok ? showAdmin() : (loginPanel.style.display = 'block'); });
+})();
+</script>
+</body>
+</html>
