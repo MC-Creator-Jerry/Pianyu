@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>观看 · 片屿</title>
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/pianyu.css">
 </head>
@@ -20,6 +21,7 @@
       <a href="map.html">岛图</a>
       <a href="admin.html">上新</a>
     </nav>
+    <div class="hdr-right" id="hdrRight"></div>
   </div>
 </header>
 
@@ -43,8 +45,11 @@
   <section class="yulun">
     <h2>屿论 <span class="count" id="cmCount"></span></h2>
     <div class="cm-form">
-      <div class="row">
+      <div class="row" id="cmNameRow">
         <input id="cmName" class="input" type="text" maxlength="24" placeholder="岛民名（可留空，默认匿名岛民）">
+      </div>
+      <div class="row" id="cmWhoRow" style="display:none">
+        <span class="dm-hint">以 <b id="cmWho"></b> 的身份发表屿论</span>
       </div>
       <textarea id="cmText" class="textarea" maxlength="500" placeholder="说点什么…"></textarea>
       <div><button id="cmSend" class="btn primary">发表屿论</button> <span id="cmMsg" class="dm-hint"></span></div>
@@ -65,12 +70,26 @@
   const dmLayer = document.getElementById('dmLayer');
   const dmBar = document.getElementById('dmBar');
 
+  PY.showSsoNotice();
+  const hdrReady = PY.mountHeader();
+
   if (!id) {
     document.querySelector('.player-wrap').style.display = 'none';
     dmBar.style.display = 'none';
     document.getElementById('title').textContent = '缺少视频 ID';
     return;
   }
+
+  /* ---------------- 登录身份 ---------------- */
+  let me = null;
+  hdrReady.then(async () => {
+    me = await PY.user.load();
+    if (me) {
+      document.getElementById('cmNameRow').style.display = 'none';
+      document.getElementById('cmWhoRow').style.display = 'flex';
+      document.getElementById('cmWho').textContent = me.name || me.login || '岛民';
+    }
+  });
 
   /* ---------------- 定点屿论 (danmaku) ---------------- */
   const DM_LANES = 5, DM_LANE_H = 28, DM_TOP = 8;
@@ -193,8 +212,12 @@
     list.slice().reverse().forEach((c) => {
       const el = document.createElement('div');
       el.className = 'cm-item';
+      const av = c.avatar
+        ? `<img class="cm-av" src="${PY.esc(c.avatar)}" alt="" loading="lazy" onerror="this.remove()">`
+        : '';
+      const badge = c.isAdmin ? '<span class="badge">站长</span>' : '';
       el.innerHTML =
-        `<div class="cm-head"><span class="who">${PY.esc(c.name)}</span><span class="when">${PY.fmtDate(c.createdAt)}</span></div>` +
+        `<div class="cm-head">${av}<span class="who">${PY.esc(c.name)}</span>${badge}<span class="when">${PY.fmtDate(c.createdAt)}</span></div>` +
         `<div class="cm-text">${PY.esc(c.text)}</div>`;
       box.appendChild(el);
     });
@@ -202,7 +225,9 @@
 
   document.getElementById('cmSend').onclick = async () => {
     const text = document.getElementById('cmText').value.trim();
-    const name = document.getElementById('cmName').value.trim();
+    const nameEl = document.getElementById('cmName');
+    // 已登录时服务端以会话身份为准；未登录则用输入框里的岛民名
+    const name = nameEl ? nameEl.value.trim() : '';
     if (!text) { document.getElementById('cmMsg').textContent = '内容不能为空'; return; }
     const { res, data } = await PY.api('/api/comments', { method: 'POST', body: JSON.stringify({ videoId: id, name, text }) });
     if (res.ok) {
