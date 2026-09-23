@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>设置 · 片屿</title>
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/pianyu.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img class="logo" src="assets/favicon.svg" alt="片屿">
+      片屿<span class="sub">PIANYU</span>
+    </a>
+    <div class="spacer"></div>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="map.html">岛图</a>
+      <a href="admin.html">上新</a>
+    </nav>
+    <div class="hdr-right" id="hdrRight"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="gate" class="gate" style="display:none">
+    <div class="ic">⚙️</div>
+    <h2>登录后才能设置</h2>
+    <p>岛民的岛名与签名保存在片屿，身份来自小蓝页。</p>
+    <a class="btn primary" id="gateLogin" href="/api/sso/start?next=%2Fsettings.html">用小蓝页登录</a>
+  </section>
+
+  <section id="content" style="display:none">
+    <h1 class="page-title">设置</h1>
+    <p class="page-sub">身份与头像来自小蓝页账户；岛名与签名只影响片屿。</p>
+
+    <div class="panel">
+      <h2>岛民档案</h2>
+      <div class="field">
+        <label for="dn">岛名（显示在屿论与定点屿论上，最长 24 字）</label>
+        <input id="dn" class="input" type="text" maxlength="24" placeholder="例如：海风">
+      </div>
+      <div class="field">
+        <label for="bio">签名（最长 120 字）</label>
+        <textarea id="bio" class="textarea" maxlength="120" placeholder="一句话介绍自己…"></textarea>
+      </div>
+      <div><button id="btnSave" class="btn primary">保存</button> <span id="saveMsg" class="dm-hint"></span></div>
+    </div>
+
+    <div class="panel">
+      <h2>显示模式</h2>
+      <div class="switch-row">
+        <span class="hint">切换片屿的整体配色。选「跟随系统」时会随你的系统设置自动变化。</span>
+        <div class="seg" id="themeSeg">
+          <button data-t="light">浅色</button>
+          <button data-t="dark">深色</button>
+          <button data-t="auto">跟随系统</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>账户</h2>
+      <div class="switch-row">
+        <div>
+          <div id="accName" style="font-weight:600"></div>
+          <div id="accLogin" class="hint"></div>
+        </div>
+        <button id="btnLogout" class="btn danger">退出登录</button>
+      </div>
+      <p class="hint" style="margin-top:12px">
+        修改小蓝页的昵称或头像后，回到片屿重新登录一次即可同步（或直接刷新页面）。
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="yr"></span> 片屿 · PIANYU</span>
+    <span class="spacer"></span>
+    <span>身份由小蓝页提供</span>
+  </div>
+</footer>
+
+<script src="assets/pianyu.js"></script>
+<script>
+(async function () {
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  PY.showSsoNotice();
+  await PY.mountHeader();
+
+  /* ---------- 显示模式 ---------- */
+  function paintSeg() {
+    const cur = PY.theme.pref();
+    document.querySelectorAll('#themeSeg button').forEach((b) => {
+      b.classList.toggle('on', b.dataset.t === cur);
+    });
+  }
+  document.querySelectorAll('#themeSeg button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const t = b.dataset.t;
+      try { localStorage.setItem(PY.theme.KEY, t); } catch (e) { /* ignore */ }
+      PY.theme.apply(PY.theme.resolve());
+      paintSeg();
+    });
+  });
+  paintSeg();
+
+  /* ---------- 档案 ---------- */
+  const me = await PY.user.load();
+  if (!me) {
+    document.getElementById('gate').style.display = 'block';
+    return;
+  }
+  document.getElementById('content').style.display = 'block';
+
+  const { res, data } = await PY.api('/api/settings');
+  if (res.ok && data && data.ok) {
+    const u = data.user || {};
+    document.getElementById('dn').value = (data.settings && data.settings.display_name) || u.name || '';
+    document.getElementById('bio').value = (data.settings && data.settings.bio) || '';
+    document.getElementById('accName').textContent = u.name || u.login || '岛民';
+    document.getElementById('accLogin').textContent =
+      (u.login ? '@' + u.login : '小蓝页账户') + (u.isAdmin ? ' · 站长' : '');
+  }
+
+  document.getElementById('btnSave').onclick = async () => {
+    const msg = document.getElementById('saveMsg');
+    msg.textContent = '保存中…';
+    const { res: r, data: d } = await PY.api('/api/settings', {
+      method: 'POST',
+      body: JSON.stringify({
+        display_name: document.getElementById('dn').value,
+        bio: document.getElementById('bio').value,
+      }),
+    });
+    if (r.ok && d && d.ok) {
+      msg.textContent = '已保存 ✓';
+      if (d.user) {
+        document.getElementById('accName').textContent = d.user.name || '';
+        // 头部头像与昵称同步刷新
+        PY.user._cached = d.user;
+      }
+      setTimeout(() => { msg.textContent = ''; }, 2500);
+    } else {
+      msg.textContent = '保存失败：' + ((d && d.error) || r.status);
+    }
+  };
+
+  document.getElementById('btnLogout').onclick = () => PY.user.logout();
+})();
+</script>
+</body>
+</html>
