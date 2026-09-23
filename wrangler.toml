@@ -1,0 +1,14 @@
+# ============================================================
+#  pianyu-site / wrangler.toml
+#  Independent Cloudflare Pages project: pianyu  (片屿 - video site)
+#  This config belongs ONLY to pianyu-site. Never deploy this repo with
+#  the workspace-root wrangler.toml (that one belongs to xiaolan).
+# ============================================================
+name = "pianyu"
+pages_build_output_dir = "."
+compatibility_date = "2024-09-23"
+
+# Independent KV for video metadata (external-link mode: we store URLs, not files)
+[[kv_namespaces]]
+binding = "PIANYU_KV"
+id = "167dfe1ed81d4471bb630f2bc7b01247"
