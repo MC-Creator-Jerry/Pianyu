@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>观看 · 片屿</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/pianyu.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img class="logo" src="assets/favicon.svg" alt="片屿">
+      片屿<span class="sub">PIANYU</span>
+    </a>
+    <div class="spacer"></div>
+    <a class="btn sm" href="index.html">返回首页</a>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <div id="player" class="player-wrap"></div>
+  <h1 id="title" class="watch-title"></h1>
+  <div id="meta" class="watch-meta"></div>
+  <div id="tags" class="tags"></div>
+  <div id="desc" class="watch-desc"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap"><span>© 片屿 · PIANYU</span></div>
+</footer>
+
+<script src="assets/pianyu.js"></script>
+<script>
+(function () {
+  const id = PY.qs('id');
+  const main = document.getElementById('main');
+
+  if (!id) {
+    document.getElementById('player').style.display = 'none';
+    document.getElementById('title').textContent = '缺少视频 ID';
+    return;
+  }
+
+  async function load() {
+    const { res, data } = await PY.api('/api/videos/' + encodeURIComponent(id));
+    if (!res.ok || !data || !data.video) {
+      document.getElementById('player').style.display = 'none';
+      document.getElementById('title').textContent = '视频不存在或已被删除';
+      return;
+    }
+    const v = data.video;
+    document.title = v.title + ' · 片屿';
+
+    const wrap = document.getElementById('player');
+    if (v.source === 'embed') {
+      const f = document.createElement('iframe');
+      f.src = v.url;
+      f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+      f.setAttribute('allowfullscreen', '');
+      f.setAttribute('referrerpolicy', 'no-referrer');
+      wrap.appendChild(f);
+    } else {
+      const vid = document.createElement('video');
+      vid.src = v.url;
+      vid.controls = true;
+      vid.playsInline = true;
+      vid.preload = 'metadata';
+      if (v.cover) vid.poster = v.cover;
+      wrap.appendChild(vid);
+    }
+
+    document.getElementById('title').textContent = v.title;
+    document.getElementById('meta').innerHTML =
+      `<span>${PY.fmtViews(v.views)} 次播放</span><span>${PY.fmtDate(v.createdAt)}</span>` +
+      (v.source === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>');
+    document.getElementById('tags').innerHTML = (v.tags || [])
+      .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
+      .join(' ');
+    document.getElementById('desc').textContent = v.desc || '';
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
