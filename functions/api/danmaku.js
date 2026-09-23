@@ -8,6 +8,7 @@
 
 import { listDanmaku, addDanmaku } from '../_lib/store.js';
 import { json } from '../_lib/auth.js';
+import { getSession, getPrefs } from '../_lib/pyauth.js';
 
 export async function onRequestGet({ request, env }) {
   const videoId = (new URL(request.url).searchParams.get('videoId') || '').trim();
@@ -31,12 +32,37 @@ export async function onRequestPost({ request, env }) {
   if (text.length > 60) return json({ ok: false, error: 'too_long' }, 400);
 
   const color = /^#[0-9a-fA-F]{3,8}$/.test(String(body.color || '')) ? body.color : '';
+
+  // 登录岛民：归属到小蓝页 sub
+  let sess = null;
+  try {
+    sess = await getSession({ request, env });
+  } catch (e) {
+    sess = null;
+  }
+
+  let name = '匿名岛民';
+  let sub = '';
+  let login = '';
+  let avatar = '';
+  if (sess) {
+    const prefs = await getPrefs(env, sess.sub);
+    name = String(prefs.display_name || sess.name || sess.login || '岛民').slice(0, 24);
+    sub = String(sess.sub || '');
+    login = sess.login || '';
+    avatar = sess.avatar_url || '';
+  }
+
   const d = {
     id: 'd_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
     time: Math.round(time * 10) / 10,
     text,
     color,
     createdAt: Date.now(),
+    name,
+    sub,
+    login,
+    avatar,
   };
   await addDanmaku(env, videoId, d);
   return json({ ok: true, danmaku: d }, 201);
