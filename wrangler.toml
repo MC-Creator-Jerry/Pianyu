@@ -4,7 +4,7 @@
 #  This config belongs ONLY to pianyu-site. Never deploy this repo with
 #  the workspace-root wrangler.toml (that one belongs to xiaolan).
 # ============================================================
-name = "pianyu"
+name = "jerrypianyu"
 pages_build_output_dir = "."
 compatibility_date = "2024-09-23"
 
