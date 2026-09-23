@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>上新 · 片屿</title>
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/pianyu.css">
 </head>
@@ -21,6 +22,7 @@
       <a href="admin.html" class="on">上新</a>
     </nav>
     <button id="btnLogout" class="btn sm" style="display:none">退出</button>
+    <div class="hdr-right" id="hdrRight"></div>
   </div>
 </header>
 
@@ -191,6 +193,8 @@
   $('btnCancel').onclick = resetForm;
 
   PY.isAdmin().then((ok) => { ok ? showAdmin() : (loginPanel.style.display = 'block'); });
+  PY.showSsoNotice();
+  PY.mountHeader();
 })();
 </script>
 </body>
