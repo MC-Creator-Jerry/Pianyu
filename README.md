@@ -16,22 +16,35 @@
 因此无需 R2、无需绑卡，Cloudflare 免费额度内 100% 零成本。
 （若日后启用 R2 免费额度，可加一个开关切到「自托管上传」，架构已预留。）
 
+## 站内术语表（黑话）
+
+| 站内叫法 | 含义 |
+|---------|------|
+| **岛民** | 观众 / 用户（播放量显示为「N 位岛民看过」） |
+| **上新** | 投稿 / 上传视频 |
+| **岛图** | 功能总览 / 站点地图（`map.html`） |
+| **屿论** | 评论（每条视频下方） |
+| **定点屿论** | 弹幕（钉在视频某个时间点飞出） |
+
 ## 目录结构
 
 ```
 pianyu-site/
-  index.html          首页（视频网格 + 搜索 + 标签筛选）
-  watch.html          播放页（?id=）
-  admin.html          管理台（登录 + 增/改/删）
+  index.html          首页（片滩：视频网格 + 搜索 + 标签筛选）
+  watch.html          观看页（?id=；含「屿论」评论区 + 「定点屿论」弹幕层）
+  admin.html          上新（登录 + 增/改/删）
+  map.html            岛图（站点功能地图）
   404.html
   assets/pianyu.css   样式（暗色岛屿主题）
   assets/pianyu.js    共享脚本
   assets/favicon.svg
   functions/          独立后端
-    _lib/store.js       KV 读写 + 会话
+    _lib/store.js       KV 读写 + 会话 + 屿论/定点屿论
     _lib/auth.js        管理员鉴权（Cookie: pianyu_sid）
     api/videos.js       GET 列表/POST 新建
     api/videos/[id].js  GET 详情/PATCH 改/DELETE 删
+    api/comments.js     GET/POST 屿论
+    api/danmaku.js      GET/POST 定点屿论
     api/admin/login.js  POST 登录
     api/admin/logout.js POST 退出
     api/admin/me.js     GET 登录态
@@ -48,6 +61,10 @@ pianyu-site/
 | GET | `/api/videos/:id` | 公开 | 详情（顺带 +1 播放量） |
 | PATCH | `/api/videos/:id` | 管理员 | 修改 |
 | DELETE | `/api/videos/:id` | 管理员 | 删除 |
+| GET | `/api/comments?videoId=` | 公开 | 屿论列表 |
+| POST | `/api/comments` | 公开 | 发表屿论 `{videoId,name?,text}` |
+| GET | `/api/danmaku?videoId=` | 公开 | 定点屿论列表 |
+| POST | `/api/danmaku` | 公开 | 发送定点屿论 `{videoId,time,text,color?}` |
 | POST | `/api/admin/login` | — | 登录（body `{password}`） |
 | POST | `/api/admin/logout` | — | 退出 |
 | GET | `/api/admin/me` | — | 登录态 `{loggedIn}` |
