@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>片屿 · 视频</title>
+<meta name="description" content="片屿 —— 一座收藏与分享视频的小岛。">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/pianyu.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img class="logo" src="assets/favicon.svg" alt="片屿">
+      片屿<span class="sub">PIANYU</span>
+    </a>
+    <div class="spacer"></div>
+    <a class="btn sm" href="admin.html">管理</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="toolbar">
+    <input id="q" class="input search" type="search" placeholder="搜索标题 / 简介 / 标签…" autocomplete="off">
+    <button id="btnClear" class="btn">清空</button>
+  </div>
+  <div id="chips" class="chips"></div>
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none">这里还是一片空岛 —— 去 <a href="admin.html">管理台</a> 添加第一个视频吧。</div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="yr"></span> 片屿 · PIANYU</span>
+    <span class="spacer"></span>
+    <span>独立站点 · 独立后端（Cloudflare Pages + Functions）</span>
+  </div>
+</footer>
+
+<script src="assets/pianyu.js"></script>
+<script>
+(function () {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  const chips = document.getElementById('chips');
+  const qInput = document.getElementById('q');
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  let state = { q: '', tag: '' };
+  let debounce = null;
+
+  async function load() {
+    const params = new URLSearchParams();
+    if (state.q) params.set('q', state.q);
+    if (state.tag) params.set('tag', state.tag);
+    const { data } = await PY.api('/api/videos?' + params.toString());
+    const videos = (data && data.videos) || [];
+    const tags = (data && data.tags) || [];
+
+    // chips
+    chips.innerHTML = '';
+    if (tags.length) {
+      const all = document.createElement('button');
+      all.className = 'chip' + (state.tag ? '' : ' on');
+      all.textContent = '全部';
+      all.onclick = () => { state.tag = ''; load(); };
+      chips.appendChild(all);
+      tags.forEach((t) => {
+        const c = document.createElement('button');
+        c.className = 'chip' + (state.tag === t ? ' on' : '');
+        c.textContent = t;
+        c.onclick = () => { state.tag = state.tag === t ? '' : t; load(); };
+        chips.appendChild(c);
+      });
+    }
+
+    grid.innerHTML = '';
+    videos.forEach((v) => grid.appendChild(PY.card(v)));
+    empty.style.display = videos.length ? 'none' : 'block';
+  }
+
+  qInput.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => { state.q = qInput.value.trim(); load(); }, 220);
+  });
+  document.getElementById('btnClear').onclick = () => {
+    qInput.value = ''; state.q = ''; state.tag = ''; load();
+  };
+
+  const u = new URLSearchParams(location.search);
+  state.q = u.get('q') || '';
+  state.tag = u.get('tag') || '';
+  qInput.value = state.q;
+  load();
+})();
+</script>
+</body>
+</html>
