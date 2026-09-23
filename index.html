@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>片屿 · 视频</title>
 <meta name="description" content="片屿 —— 一座收藏与分享视频的小岛。岛民在此上新、看片、聊屿论。">
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/pianyu.css">
 </head>
@@ -21,6 +22,7 @@
       <a href="map.html">岛图</a>
       <a href="admin.html">上新</a>
     </nav>
+    <div class="hdr-right" id="hdrRight"></div>
   </div>
 </header>
 
@@ -97,6 +99,9 @@
   state.tag = u.get('tag') || '';
   qInput.value = state.q;
   load();
+
+  PY.showSsoNotice();
+  PY.mountHeader();
 })();
 </script>
 </body>
