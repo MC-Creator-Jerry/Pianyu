@@ -60,6 +60,12 @@
     </div>
 
     <div class="panel">
+      <h2>我的投稿（<span id="myCnt">0</span>）</h2>
+      <p class="hint">这里只列你用自己的小蓝页账户投过的视频，可随时编辑或删除。</p>
+      <div id="myList" class="admin-list"></div>
+    </div>
+
+    <div class="panel">
       <h2>岛上视频（<span id="cnt">0</span>）</h2>
       <div id="list" class="admin-list"></div>
     </div>
@@ -78,32 +84,49 @@
     el.innerHTML = text ? `<div class="notice ${type || 'ok'}">${PY.esc(text)}</div>` : '';
   }
 
+  function isMod(v, me) {
+    const isOwner = !!(me && me.isAdmin);
+    const mySub = me && me.sub;
+    return isOwner || (v.author && v.author.sub && mySub && String(v.author.sub) === String(mySub));
+  }
+
+  function rowHtml(v, me) {
+    const canMod = isMod(v, me);
+    const by = v.author ? (v.author.owner ? '站长' : PY.esc(v.author.name || '岛民')) : '未知';
+    return `<div class="t">` +
+        `<div class="n">${PY.esc(v.title)}</div>` +
+        `<div class="u">${PY.esc(v.source)} · ${PY.esc(v.url)} · 由 ${by} 发布</div>` +
+      `</div>` +
+      `<a class="btn sm" href="watch.html?id=${encodeURIComponent(v.id)}" target="_blank">看</a>` +
+      (canMod ? `<button class="btn sm" data-edit="${v.id}">编辑</button>` : '') +
+      (canMod ? `<button class="btn sm danger" data-del="${v.id}">删除</button>` : '');
+  }
+
+  function renderList(el, videos, me) {
+    el.innerHTML = '';
+    if (!videos.length) { el.innerHTML = '<p class="hint">这里还没有视频。</p>'; return; }
+    videos.forEach((v) => {
+      const row = document.createElement('div');
+      row.className = 'admin-item';
+      row.innerHTML = rowHtml(v, me);
+      el.appendChild(row);
+    });
+    el.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => startEdit(b.dataset.edit, videos));
+    el.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => del(b.dataset.del, videos, me));
+  }
+
   async function refresh(me) {
     const { data } = await PY.api('/api/videos');
     const videos = (data && data.videos) || [];
-    $('cnt').textContent = videos.length;
-    const list = $('list');
-    list.innerHTML = '';
-    if (!videos.length) { list.innerHTML = '<p class="hint">岛上还没有视频。来发第一部吧！</p>'; return; }
     const isOwner = !!(me && me.isAdmin);
     const mySub = me && me.sub;
-    videos.forEach((v) => {
-      const canMod = isOwner || (v.author && v.author.sub && mySub && String(v.author.sub) === String(mySub));
-      const by = v.author ? (v.author.owner ? '站长' : PY.esc(v.author.name || '岛民')) : '未知';
-      const row = document.createElement('div');
-      row.className = 'admin-item';
-      row.innerHTML =
-        `<div class="t">` +
-          `<div class="n">${PY.esc(v.title)}</div>` +
-          `<div class="u">${PY.esc(v.source)} · ${PY.esc(v.url)} · 由 ${by} 发布</div>` +
-        `</div>` +
-        `<a class="btn sm" href="watch.html?id=${encodeURIComponent(v.id)}" target="_blank">看</a>` +
-        (canMod ? `<button class="btn sm" data-edit="${v.id}">编辑</button>` : '') +
-        (canMod ? `<button class="btn sm danger" data-del="${v.id}">删除</button>` : '');
-      list.appendChild(row);
-    });
-    list.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => startEdit(b.dataset.edit, videos));
-    list.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => del(b.dataset.del, videos, me));
+    const mine = videos.filter((v) =>
+      isOwner ? (v.author && v.author.owner) : (v.author && v.author.sub && mySub && String(v.author.sub) === String(mySub))
+    );
+    $('cnt').textContent = videos.length;
+    $('myCnt').textContent = mine.length;
+    renderList($('list'), videos, me);
+    renderList($('myList'), mine, me);
   }
 
   function resetForm() {
