@@ -287,44 +287,48 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
 /* ============================================================
    头部右侧：深浅模式切换 + 岛民头像
    ============================================================ */
-.hdr-right { display: flex; align-items: center; gap: 8px; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
 
+/* 深浅模式：圆角方块按钮（🌙/☀️），与右侧头像条同高、成对出现 */
 .theme-btn {
-  width: 36px; height: 36px;
-  border-radius: 10px;
+  width: 38px; height: 38px;
+  border-radius: 11px;
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1;
   display: flex; align-items: center; justify-content: center;
   padding: 0;
+  transition: border-color .15s ease, background .15s ease;
 }
 .theme-btn:hover { border-color: var(--accent); }
 
 .user-wrap { position: relative; }
+/* 岛民头像条：一整颗胶囊（左头像 + 右昵称），与茶馆同款 */
 .avatar-btn {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 9px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 4px 12px 4px 4px;
+  padding: 4px 14px 4px 4px;
   cursor: pointer;
   color: var(--text);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
+  transition: border-color .15s ease, background .15s ease;
 }
 .avatar-btn:hover { border-color: var(--accent); }
-.avatar-btn img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block; }
+.avatar-btn img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block; }
 .avatar-btn .fb {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 30px; height: 30px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
-  color: var(--on-accent); font-weight: 700; font-size: 13px;
+  color: var(--on-accent); font-weight: 700; font-size: 14px;
   flex: none;
 }
-.avatar-btn .nm { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar-btn .nm { font-weight: 600; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .login-btn {
   display: inline-flex; align-items: center; gap: 6px;
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
