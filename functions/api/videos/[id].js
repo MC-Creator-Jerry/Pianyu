@@ -1,12 +1,13 @@
 // ============================================================
 //  pianyu-site / functions/api/videos/[id].js
 //  GET    /api/videos/:id  -> detail (public; bumps view count)
-//  PATCH  /api/videos/:id  -> edit  (admin only)
-//  DELETE /api/videos/:id  -> delete (admin only)
+//  PATCH  /api/videos/:id  -> edit  (author, or owner superuser)
+//  DELETE /api/videos/:id  -> delete (author, or owner superuser)
 // ============================================================
 
 import { listVideos, saveVideos, normalizeTags } from '../../_lib/store.js';
-import { isAuthed, json } from '../../_lib/auth.js';
+import { json } from '../../_lib/auth.js';
+import { getActor, canModify } from '../../_lib/actor.js';
 
 export async function onRequestGet({ params, env, waitUntil }) {
   const videos = await listVideos(env);
@@ -22,7 +23,8 @@ export async function onRequestGet({ params, env, waitUntil }) {
 }
 
 export async function onRequestPatch({ params, request, env }) {
-  if (!(await isAuthed(request, env))) return json({ ok: false, error: 'unauthorized' }, 401);
+  const actor = await getActor(request, env);
+  if (!actor) return json({ ok: false, error: 'unauthorized' }, 401);
 
   let body;
   try {
@@ -35,6 +37,8 @@ export async function onRequestPatch({ params, request, env }) {
   const i = videos.findIndex((v) => v.id === params.id);
   if (i < 0) return json({ ok: false, error: 'not_found' }, 404);
   const v = videos[i];
+
+  if (!canModify(actor, v)) return json({ ok: false, error: 'forbidden' }, 403);
 
   if (typeof body.title === 'string' && body.title.trim()) v.title = body.title.trim();
   if (typeof body.desc === 'string') v.desc = body.desc.trim();
@@ -50,12 +54,15 @@ export async function onRequestPatch({ params, request, env }) {
 }
 
 export async function onRequestDelete({ params, request, env }) {
-  if (!(await isAuthed(request, env))) return json({ ok: false, error: 'unauthorized' }, 401);
+  const actor = await getActor(request, env);
+  if (!actor) return json({ ok: false, error: 'unauthorized' }, 401);
 
   const videos = await listVideos(env);
-  const next = videos.filter((v) => v.id !== params.id);
-  if (next.length === videos.length) return json({ ok: false, error: 'not_found' }, 404);
+  const v = videos.find((x) => x.id === params.id);
+  if (!v) return json({ ok: false, error: 'not_found' }, 404);
+  if (!canModify(actor, v)) return json({ ok: false, error: 'forbidden' }, 403);
 
+  const next = videos.filter((x) => x.id !== params.id);
   await saveVideos(env, next);
   return json({ ok: true, deleted: params.id });
 }
