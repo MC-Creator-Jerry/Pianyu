@@ -41,6 +41,13 @@ window.PY = {
     return String(n);
   },
 
+  fmtTime(sec) {
+    sec = Math.max(0, Math.floor(Number(sec) || 0));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  },
+
   // Build a card element for a video
   card(v) {
     const a = document.createElement('a');
@@ -60,7 +67,7 @@ window.PY = {
       </div>
       <div class="body">
         <div class="title">${window.PY.esc(v.title)}</div>
-        <div class="meta"><span>${window.PY.fmtViews(v.views)} 次播放</span><span>${window.PY.fmtDate(v.createdAt)}</span></div>
+        <div class="meta"><span>${window.PY.fmtViews(v.views)} 位岛民看过</span><span>${window.PY.fmtDate(v.createdAt)}</span></div>
         ${tags ? `<div class="tags">${tags}</div>` : ''}
       </div>`;
     return a;
