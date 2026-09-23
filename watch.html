@@ -15,16 +15,42 @@
       片屿<span class="sub">PIANYU</span>
     </a>
     <div class="spacer"></div>
-    <a class="btn sm" href="index.html">返回首页</a>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="map.html">岛图</a>
+      <a href="admin.html">上新</a>
+    </nav>
   </div>
 </header>
 
 <main class="wrap" id="main">
-  <div id="player" class="player-wrap"></div>
+  <div class="player-wrap">
+    <div id="videoHost"></div>
+    <div id="dmLayer" class="dm-layer"></div>
+  </div>
+
+  <div class="dm-bar" id="dmBar">
+    <input id="dmText" class="input" type="text" maxlength="60" placeholder="发一条定点屿论（会钉在当前时间点）…">
+    <button id="dmSend" class="btn primary sm">定点发送</button>
+    <label class="dm-hint"><input type="checkbox" id="dmToggle" checked> 显示定点屿论</label>
+  </div>
+
   <h1 id="title" class="watch-title"></h1>
   <div id="meta" class="watch-meta"></div>
   <div id="tags" class="tags"></div>
   <div id="desc" class="watch-desc"></div>
+
+  <section class="yulun">
+    <h2>屿论 <span class="count" id="cmCount"></span></h2>
+    <div class="cm-form">
+      <div class="row">
+        <input id="cmName" class="input" type="text" maxlength="24" placeholder="岛民名（可留空，默认匿名岛民）">
+      </div>
+      <textarea id="cmText" class="textarea" maxlength="500" placeholder="说点什么…"></textarea>
+      <div><button id="cmSend" class="btn primary">发表屿论</button> <span id="cmMsg" class="dm-hint"></span></div>
+    </div>
+    <div id="cmList" class="cm-list"></div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -35,51 +61,158 @@
 <script>
 (function () {
   const id = PY.qs('id');
-  const main = document.getElementById('main');
+  const host = document.getElementById('videoHost');
+  const dmLayer = document.getElementById('dmLayer');
+  const dmBar = document.getElementById('dmBar');
 
   if (!id) {
-    document.getElementById('player').style.display = 'none';
+    document.querySelector('.player-wrap').style.display = 'none';
+    dmBar.style.display = 'none';
     document.getElementById('title').textContent = '缺少视频 ID';
     return;
   }
 
+  /* ---------------- 定点屿论 (danmaku) ---------------- */
+  const DM_LANES = 5, DM_LANE_H = 28, DM_TOP = 8;
+  let danmaku = [], dmShown = Object.create(null), dmEnabled = true, dmIndex = 0;
+
+  function spawnDm(d) {
+    if (!dmEnabled) return;
+    const el = document.createElement('div');
+    el.className = 'dm-item';
+    el.textContent = d.text;
+    if (d.color) el.style.color = d.color;
+    el.style.top = (DM_TOP + (dmIndex % DM_LANES) * DM_LANE_H) + 'px';
+    dmIndex++;
+    const dur = Math.min(16, 7 + d.text.length * 0.12);
+    el.style.animationDuration = dur + 's';
+    el.addEventListener('animationend', () => el.remove());
+    dmLayer.appendChild(el);
+  }
+
+  /* ---------------- load ---------------- */
+  let video = null;
+
   async function load() {
     const { res, data } = await PY.api('/api/videos/' + encodeURIComponent(id));
     if (!res.ok || !data || !data.video) {
-      document.getElementById('player').style.display = 'none';
+      document.querySelector('.player-wrap').style.display = 'none';
+      dmBar.style.display = 'none';
       document.getElementById('title').textContent = '视频不存在或已被删除';
       return;
     }
     const v = data.video;
     document.title = v.title + ' · 片屿';
 
-    const wrap = document.getElementById('player');
     if (v.source === 'embed') {
       const f = document.createElement('iframe');
       f.src = v.url;
       f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
       f.setAttribute('allowfullscreen', '');
       f.setAttribute('referrerpolicy', 'no-referrer');
-      wrap.appendChild(f);
+      host.appendChild(f);
+      // embed mode cannot track time -> 定点屿论 unavailable
+      dmBar.innerHTML = '<span class="dm-hint">此视频为「嵌入页」模式，播放器由外部站点托管，无法读取播放时间，定点屿论不可用（直链视频支持）。</span>';
     } else {
-      const vid = document.createElement('video');
-      vid.src = v.url;
-      vid.controls = true;
-      vid.playsInline = true;
-      vid.preload = 'metadata';
-      if (v.cover) vid.poster = v.cover;
-      wrap.appendChild(vid);
+      video = document.createElement('video');
+      video.src = v.url;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      if (v.cover) video.poster = v.cover;
+      host.appendChild(video);
+      startDmLoop();
     }
 
     document.getElementById('title').textContent = v.title;
     document.getElementById('meta').innerHTML =
-      `<span>${PY.fmtViews(v.views)} 次播放</span><span>${PY.fmtDate(v.createdAt)}</span>` +
+      `<span>${PY.fmtViews(v.views)} 位岛民看过</span><span>${PY.fmtDate(v.createdAt)}</span>` +
       (v.source === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>');
     document.getElementById('tags').innerHTML = (v.tags || [])
       .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
       .join(' ');
     document.getElementById('desc').textContent = v.desc || '';
+
+    loadDanmaku();
+    loadComments();
   }
+
+  async function loadDanmaku() {
+    const { data } = await PY.api('/api/danmaku?videoId=' + encodeURIComponent(id));
+    danmaku = (data && data.danmaku) || [];
+  }
+
+  function startDmLoop() {
+    let last = -1;
+    function tick() {
+      requestAnimationFrame(tick);
+      if (!video) return;
+      const t = video.currentTime;
+      if (t < last - 1) dmShown = Object.create(null); // seeked backwards -> replay
+      last = t;
+      danmaku.forEach((d) => {
+        if (!dmShown[d.id] && t >= d.time && t - d.time < 0.6) {
+          dmShown[d.id] = 1;
+          spawnDm(d);
+        }
+      });
+    }
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('dmSend').onclick = async () => {
+    const text = document.getElementById('dmText').value.trim();
+    if (!text) return;
+    if (!video) { alert('此模式不支持定点屿论'); return; }
+    const time = video.currentTime;
+    const { res, data } = await PY.api('/api/danmaku', { method: 'POST', body: JSON.stringify({ videoId: id, text, time }) });
+    if (res.ok) {
+      document.getElementById('dmText').value = '';
+      danmaku.push(data.danmaku);
+      spawnDm(data.danmaku);
+    } else {
+      alert('发送失败：' + ((data && data.error) || res.status));
+    }
+  };
+  document.getElementById('dmText').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('dmSend').click();
+  });
+  document.getElementById('dmToggle').onchange = (e) => {
+    dmEnabled = e.target.checked;
+    dmLayer.style.display = dmEnabled ? 'block' : 'none';
+  };
+
+  /* ---------------- 屿论 (comments) ---------------- */
+  async function loadComments() {
+    const { data } = await PY.api('/api/comments?videoId=' + encodeURIComponent(id));
+    const list = (data && data.comments) || [];
+    document.getElementById('cmCount').textContent = list.length ? '(' + list.length + ')' : '';
+    const box = document.getElementById('cmList');
+    box.innerHTML = '';
+    if (!list.length) { box.innerHTML = '<p class="dm-hint">还没有屿论，来占个座吧。</p>'; return; }
+    list.slice().reverse().forEach((c) => {
+      const el = document.createElement('div');
+      el.className = 'cm-item';
+      el.innerHTML =
+        `<div class="cm-head"><span class="who">${PY.esc(c.name)}</span><span class="when">${PY.fmtDate(c.createdAt)}</span></div>` +
+        `<div class="cm-text">${PY.esc(c.text)}</div>`;
+      box.appendChild(el);
+    });
+  }
+
+  document.getElementById('cmSend').onclick = async () => {
+    const text = document.getElementById('cmText').value.trim();
+    const name = document.getElementById('cmName').value.trim();
+    if (!text) { document.getElementById('cmMsg').textContent = '内容不能为空'; return; }
+    const { res, data } = await PY.api('/api/comments', { method: 'POST', body: JSON.stringify({ videoId: id, name, text }) });
+    if (res.ok) {
+      document.getElementById('cmText').value = '';
+      document.getElementById('cmMsg').textContent = '';
+      loadComments();
+    } else {
+      document.getElementById('cmMsg').textContent = '发送失败：' + ((data && data.error) || res.status);
+    }
+  };
 
   load();
 })();
