@@ -50,3 +50,38 @@ export async function getSession(env, sid) {
 export async function deleteSession(env, sid) {
   if (sid) await env.PIANYU_KV.delete(SESSION_PREFIX + sid);
 }
+
+/* ---------------- 屿论 (comments) ---------------- */
+
+const COMMENTS_PREFIX = 'comments:';
+
+export async function listComments(env, videoId) {
+  const raw = await env.PIANYU_KV.get(COMMENTS_PREFIX + videoId, { type: 'json' });
+  return Array.isArray(raw) ? raw : [];
+}
+
+export async function addComment(env, videoId, comment) {
+  const list = await listComments(env, videoId);
+  list.push(comment);
+  // keep the newest 500 per video
+  const trimmed = list.slice(-500);
+  await env.PIANYU_KV.put(COMMENTS_PREFIX + videoId, JSON.stringify(trimmed));
+  return trimmed;
+}
+
+/* ---------------- 定点屿论 (danmaku) ---------------- */
+
+const DANMAKU_PREFIX = 'danmaku:';
+
+export async function listDanmaku(env, videoId) {
+  const raw = await env.PIANYU_KV.get(DANMAKU_PREFIX + videoId, { type: 'json' });
+  return Array.isArray(raw) ? raw : [];
+}
+
+export async function addDanmaku(env, videoId, d) {
+  const list = await listDanmaku(env, videoId);
+  list.push(d);
+  const trimmed = list.slice(-1000);
+  await env.PIANYU_KV.put(DANMAKU_PREFIX + videoId, JSON.stringify(trimmed));
+  return trimmed;
+}
