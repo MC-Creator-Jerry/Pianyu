@@ -21,21 +21,20 @@
       <a href="map.html">岛图</a>
       <a href="admin.html" class="on">上新</a>
     </nav>
-    <button id="btnLogout" class="btn sm" style="display:none">退出</button>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
 </header>
 
 <main class="wrap">
-  <!-- login -->
-  <section id="loginPanel" class="panel" style="max-width:420px">
-    <h2>管理台 · 已开放</h2>
-    <p class="hint">管理员密码已取消，管理台对全网开放。正在自动进入…</p>
-    <button id="btnLogin" class="btn primary">进入管理台</button>
-    <div id="loginMsg"></div>
+  <!-- 未登录 -->
+  <section id="gate" class="gate" style="display:none">
+    <div class="ic">🏝️</div>
+    <h2>登岛后才能上新</h2>
+    <p>用小蓝页账户登录后，就能在这座岛上发布你的视频，并管理你自己发的片子。</p>
+    <a class="btn primary" id="gateLogin" href="/api/sso/start?next=%2Fadmin.html">用小蓝页登录</a>
   </section>
 
-  <!-- admin -->
+  <!-- 已登录：上新 -->
   <section id="adminPanel" style="display:none">
     <div class="panel">
       <h2 id="formTitle">上新</h2>
@@ -73,34 +72,38 @@
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
-  const loginPanel = $('loginPanel'), adminPanel = $('adminPanel');
+  const adminPanel = $('adminPanel');
 
   function msg(el, text, type) {
     el.innerHTML = text ? `<div class="notice ${type || 'ok'}">${PY.esc(text)}</div>` : '';
   }
 
-  async function refresh() {
+  async function refresh(me) {
     const { data } = await PY.api('/api/videos');
     const videos = (data && data.videos) || [];
     $('cnt').textContent = videos.length;
     const list = $('list');
     list.innerHTML = '';
-    if (!videos.length) { list.innerHTML = '<p class="hint">岛上还没有视频。</p>'; return; }
+    if (!videos.length) { list.innerHTML = '<p class="hint">岛上还没有视频。来发第一部吧！</p>'; return; }
+    const isOwner = !!(me && me.isAdmin);
+    const mySub = me && me.sub;
     videos.forEach((v) => {
+      const canMod = isOwner || (v.author && v.author.sub && mySub && String(v.author.sub) === String(mySub));
+      const by = v.author ? (v.author.owner ? '站长' : PY.esc(v.author.name || '岛民')) : '未知';
       const row = document.createElement('div');
       row.className = 'admin-item';
-      row.innerHTML = `
-        <div class="t">
-          <div class="n">${PY.esc(v.title)}</div>
-          <div class="u">${PY.esc(v.source)} · ${PY.esc(v.url)}</div>
-        </div>
-        <a class="btn sm" href="watch.html?id=${encodeURIComponent(v.id)}" target="_blank">看</a>
-        <button class="btn sm" data-edit="${v.id}">编辑</button>
-        <button class="btn sm danger" data-del="${v.id}">删除</button>`;
+      row.innerHTML =
+        `<div class="t">` +
+          `<div class="n">${PY.esc(v.title)}</div>` +
+          `<div class="u">${PY.esc(v.source)} · ${PY.esc(v.url)} · 由 ${by} 发布</div>` +
+        `</div>` +
+        `<a class="btn sm" href="watch.html?id=${encodeURIComponent(v.id)}" target="_blank">看</a>` +
+        (canMod ? `<button class="btn sm" data-edit="${v.id}">编辑</button>` : '') +
+        (canMod ? `<button class="btn sm danger" data-del="${v.id}">删除</button>` : '');
       list.appendChild(row);
     });
     list.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => startEdit(b.dataset.edit, videos));
-    list.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => del(b.dataset.del, videos));
+    list.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => del(b.dataset.del, videos, me));
   }
 
   function resetForm() {
@@ -128,11 +131,11 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async function del(id, videos) {
+  async function del(id, videos, me) {
     const v = videos.find((x) => x.id === id);
     if (!confirm('确定删除「' + (v ? v.title : id) + '」？此操作不可撤销。')) return;
     const { res, data } = await PY.api('/api/videos/' + encodeURIComponent(id), { method: 'DELETE' });
-    if (res.ok) refresh();
+    if (res.ok) refresh(me);
     else alert('删除失败：' + ((data && data.error) || res.status));
   }
 
@@ -154,42 +157,29 @@
     if (res.ok) {
       msg($('formMsg'), id ? '已更新' : '已添加', 'ok');
       resetForm();
-      refresh();
+      const me = await PY.user.load(true);
+      refresh(me);
     } else {
       msg($('formMsg'), '保存失败：' + ((data && data.error) || res.status), 'err');
     }
   }
 
-  async function showAdmin() {
-    loginPanel.style.display = 'none';
+  function showAdmin(me) {
     adminPanel.style.display = 'block';
-    $('btnLogout').style.display = 'inline-block';
+    document.getElementById('gate').style.display = 'none';
     resetForm();
-    refresh();
+    refresh(me);
   }
-
-  $('btnLogin').onclick = async () => {
-    const { res, data } = await PY.api('/api/admin/login', { method: 'POST', body: JSON.stringify({}) });
-    if (res.ok) { msg($('loginMsg'), ''); showAdmin(); }
-    else msg($('loginMsg'), '进入失败：' + ((data && data.error) || res.status), 'err');
-  };
-
-  $('btnLogout').onclick = async () => {
-    await PY.api('/api/admin/logout', { method: 'POST' });
-    location.reload();
-  };
 
   $('btnSave').onclick = save;
   $('btnCancel').onclick = resetForm;
 
-  // Password removed per owner request: the panel is open.
-  // On load, if not already an admin, auto-obtain an open session.
+  // 上新页 = 岛民（小蓝页 SSO）专用。未登录显示登岛引导；
+  // 登录后：站长(isAdmin) 可改/删任意片，普通岛民只能改/删自己发的。
   (async () => {
-    const ok = await PY.isAdmin();
-    if (ok) { showAdmin(); return; }
-    const r = await PY.api('/api/admin/login', { method: 'POST', body: JSON.stringify({}) });
-    if (r.res.ok) showAdmin();
-    else { loginPanel.style.display = 'block'; msg($('loginMsg'), '进入管理台失败：' + ((r.data && r.data.error) || r.res.status), 'err'); }
+    const me = await PY.user.load();
+    if (!me) { document.getElementById('gate').style.display = 'block'; return; }
+    showAdmin(me);
   })();
   PY.showSsoNotice();
   PY.mountHeader();
