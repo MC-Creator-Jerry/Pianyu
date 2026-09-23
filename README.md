@@ -2,7 +2,7 @@
 
 一座收藏与分享视频的小岛 —— **独立站点 + 独立后端**，部署在 Cloudflare Pages。
 
-- 线上地址：https://pianyu-bv7.pages.dev/  （`pianyu.pages.dev` 已被他人占用，Cloudflare 自动分配了 `pianyu-bv7` 子域）
+- 线上地址：https://jerrypianyu.pages.dev/
 - 独立后端：本目录内 `functions/`（Cloudflare Pages Functions），**不与其他站点共享**
 - 独立存储：Cloudflare KV `PIANYU_KV`
 - GitHub 镜像：https://github.com/MC-Creator-Jerry/Pianyu
@@ -58,7 +58,7 @@ pianyu-site/
 
 ```powershell
 # 设置管理员密码（仅需一次，不入库）
-wrangler pages secret put PIANYU_ADMIN_PASSWORD --project-name pianyu
+wrangler pages secret put PIANYU_ADMIN_PASSWORD --project-name jerrypianyu
 
 # 部署（务必先 cd 进站点目录，脚本已处理）
 powershell -ExecutionPolicy Bypass -File "C:\Users\jerry\WorkBuddy\automation-2026-08-16-12-12-06\deploy-pianyu.ps1"
@@ -78,7 +78,7 @@ powershell -ExecutionPolicy Bypass -File "C:\Users\jerry\WorkBuddy\automation-20
 
 | 资源 | 值 |
 |------|----|
-| Pages 项目 | `pianyu`（线上域 `pianyu-bv7.pages.dev`） |
+| Pages 项目 | `jerrypianyu`（线上域 `jerrypianyu.pages.dev`） |
 | KV 命名空间 | `PIANYU_KV` = `167dfe1ed81d4471bb630f2bc7b01247` |
 | 管理员密钥 | `PIANYU_ADMIN_PASSWORD`（Pages secret） |
 | 会话 Cookie | `pianyu_sid` |
