@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>管理台 · 片屿</title>
+<title>上新 · 片屿</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/pianyu.css">
 </head>
@@ -15,7 +15,11 @@
       片屿<span class="sub">PIANYU</span>
     </a>
     <div class="spacer"></div>
-    <a class="btn sm" href="index.html">首页</a>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="map.html">岛图</a>
+      <a href="admin.html" class="on">上新</a>
+    </nav>
     <button id="btnLogout" class="btn sm" style="display:none">退出</button>
   </div>
 </header>
@@ -33,14 +37,14 @@
     <p class="hint" style="margin-top:12px">
       密码由 Pages 密钥 <code>PIANYU_ADMIN_PASSWORD</code> 提供。若未设置，登录会返回
       <code>not_configured</code>，需先执行：<br>
-      <code>wrangler pages secret put PIANYU_ADMIN_PASSWORD --project-name pianyu</code>
+      <code>wrangler pages secret put PIANYU_ADMIN_PASSWORD --project-name jerrypianyu</code>
     </p>
   </section>
 
   <!-- admin -->
   <section id="adminPanel" style="display:none">
     <div class="panel">
-      <h2 id="formTitle">添加视频</h2>
+      <h2 id="formTitle">上新</h2>
       <input type="hidden" id="editId" value="">
       <div class="field"><label>标题 *</label><input id="fTitle" class="input" placeholder="视频标题"></div>
       <div class="field"><label>视频地址 *（外链）</label><input id="fUrl" class="input" placeholder="https://... 直链 mp4 或 嵌入页地址"></div>
@@ -63,7 +67,7 @@
     </div>
 
     <div class="panel">
-      <h2>已有视频（<span id="cnt">0</span>）</h2>
+      <h2>岛上视频（<span id="cnt">0</span>）</h2>
       <div id="list" class="admin-list"></div>
     </div>
   </section>
@@ -87,7 +91,7 @@
     $('cnt').textContent = videos.length;
     const list = $('list');
     list.innerHTML = '';
-    if (!videos.length) { list.innerHTML = '<p class="hint">还没有视频。</p>'; return; }
+    if (!videos.length) { list.innerHTML = '<p class="hint">岛上还没有视频。</p>'; return; }
     videos.forEach((v) => {
       const row = document.createElement('div');
       row.className = 'admin-item';
@@ -109,7 +113,7 @@
     $('editId').value = '';
     $('fTitle').value = ''; $('fUrl').value = ''; $('fSource').value = 'file';
     $('fDuration').value = ''; $('fCover').value = ''; $('fTags').value = ''; $('fDesc').value = '';
-    $('formTitle').textContent = '添加视频';
+    $('formTitle').textContent = '上新';
     $('btnCancel').style.display = 'none';
     msg($('formMsg'), '');
   }
@@ -125,7 +129,7 @@
     $('fCover').value = v.cover || '';
     $('fTags').value = (v.tags || []).join(', ');
     $('fDesc').value = v.desc || '';
-    $('formTitle').textContent = '编辑视频';
+    $('formTitle').textContent = '改一下这条';
     $('btnCancel').style.display = 'inline-block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
