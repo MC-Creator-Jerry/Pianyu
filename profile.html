@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的主页 · 片屿</title>
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/pianyu.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img class="logo" src="assets/favicon.svg" alt="片屿">
+      片屿<span class="sub">PIANYU</span>
+    </a>
+    <div class="spacer"></div>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="map.html">岛图</a>
+      <a href="admin.html">上新</a>
+    </nav>
+    <div class="hdr-right" id="hdrRight"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 未登录 -->
+  <section id="gate" class="gate" style="display:none">
+    <div class="ic">🏝️</div>
+    <h2>还没有登岛</h2>
+    <p>用小蓝页账户登录后，这里会显示你的岛民档案与在这座岛上的足迹。</p>
+    <a class="btn primary" id="gateLogin" href="/api/sso/start?next=%2Fprofile.html">用小蓝页登录</a>
+  </section>
+
+  <!-- 已登录 -->
+  <section id="content" style="display:none">
+    <h1 class="page-title">我的主页</h1>
+    <p class="page-sub">你在片屿留下的痕迹，都记在这张岛上。</p>
+
+    <div class="profile-head">
+      <div id="avatarSlot"></div>
+      <div class="who">
+        <div class="n" id="pName"></div>
+        <div class="u" id="pLogin"></div>
+        <div class="b" id="pBio"></div>
+      </div>
+      <div><a class="btn" href="settings.html">编辑设置</a></div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="v" id="sComments">0</div><div class="k">屿论</div></div>
+      <div class="stat"><div class="v" id="sDanmaku">0</div><div class="k">定点屿论</div></div>
+      <div class="stat"><div class="v" id="sTotal">0</div><div class="k">发表合计</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" data-tab="comments">屿论</button>
+      <button class="tab" data-tab="danmaku">定点屿论</button>
+    </div>
+    <div id="actList" class="act-list"></div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="yr"></span> 片屿 · PIANYU</span>
+    <span class="spacer"></span>
+    <span>身份由小蓝页提供</span>
+  </div>
+</footer>
+
+<script src="assets/pianyu.js"></script>
+<script>
+(async function () {
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  PY.showSsoNotice();
+  await PY.mountHeader();
+
+  const me = await PY.user.load();
+  if (!me) {
+    document.getElementById('gate').style.display = 'block';
+    return;
+  }
+
+  const { res, data } = await PY.api('/api/profile');
+  if (!res.ok || !data || !data.ok) {
+    document.getElementById('gate').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('content').style.display = 'block';
+
+  const u = data.user || {};
+  const ini = PY.user.initial(u);
+
+  document.getElementById('avatarSlot').innerHTML = u.avatar_url
+    ? `<img class="big" src="${PY.esc(u.avatar_url)}" alt="">`
+    : `<div class="big fb">${PY.esc(ini)}</div>`;
+
+  document.getElementById('pName').innerHTML =
+    PY.esc(u.name || u.login || '岛民') + (u.isAdmin ? '<span class="badge">站长</span>' : '');
+  document.getElementById('pLogin').textContent = u.login ? '@' + u.login : '小蓝页账户';
+  document.getElementById('pBio').textContent = u.bio || '这位岛民还没有写签名。';
+
+  const act = data.activity || { comments: [], danmaku: [] };
+  const stats = data.stats || { comments: 0, danmaku: 0, total: 0 };
+  document.getElementById('sComments').textContent = stats.comments;
+  document.getElementById('sDanmaku').textContent = stats.danmaku;
+  document.getElementById('sTotal').textContent = stats.total;
+
+  let tab = 'comments';
+
+  function render() {
+    const list = act[tab] || [];
+    const box = document.getElementById('actList');
+    box.innerHTML = '';
+    if (!list.length) {
+      box.innerHTML = '<p class="dm-hint">这里还空着 —— 去 <a href="index.html">首页</a> 找部片子说两句吧。</p>';
+      return;
+    }
+    list.forEach((it) => {
+      const el = document.createElement('div');
+      el.className = 'act';
+      const when = PY.fmtDate(it.createdAt);
+      el.innerHTML =
+        `<div class="top"><a class="vd" href="watch.html?id=${encodeURIComponent(it.videoId)}">${PY.esc(it.videoTitle)}</a><span class="when">${when}</span></div>` +
+        `<div class="tx">${PY.esc(it.text)}</div>` +
+        (tab === 'danmaku' && it.time != null ? `<div class="at">钉在 ${PY.fmtTime(it.time)}</div>` : '');
+      box.appendChild(el);
+    });
+  }
+
+  document.querySelectorAll('.tab').forEach((b) => {
+    b.addEventListener('click', () => {
+      tab = b.dataset.tab;
+      document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === b));
+      render();
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
