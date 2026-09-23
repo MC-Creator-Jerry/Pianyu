@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>岛图 · 片屿</title>
 <meta name="description" content="片屿的岛图 —— 一眼看清这座小岛有哪些功能。">
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/pianyu.css">
 </head>
@@ -21,6 +22,7 @@
       <a href="map.html" class="on">岛图</a>
       <a href="admin.html">上新</a>
     </nav>
+    <div class="hdr-right" id="hdrRight"></div>
   </div>
 </header>
 
@@ -59,11 +61,28 @@
       <div class="nm">观看</div>
       <div class="ds">播放页。直链视频用原生播放器，嵌入页用内嵌播放器；播放量以"岛民看过"计。</div>
     </a>
+    <a class="map-card" href="profile.html">
+      <div class="ic">🪪</div>
+      <div class="nm">我的主页</div>
+      <div class="ds">岛民档案。用小蓝页账户登录后，这里汇总你在这座岛上发过的屿论与定点屿论。</div>
+    </a>
+    <a class="map-card" href="settings.html">
+      <div class="ic">⚙️</div>
+      <div class="nm">设置</div>
+      <div class="ds">改岛名与签名、切换深色 / 浅色 / 跟随系统，以及退出登录。头像与身份来自小蓝页。</div>
+    </a>
+    <a class="map-card" href="/api/sso/start?next=%2Fprofile.html">
+      <div class="ic">🔐</div>
+      <div class="nm">小蓝页登录</div>
+      <div class="ds">片屿不单独存密码。点右上角头像即可用小蓝页账户登岛，身份在两个站点之间互通。</div>
+    </a>
   </div>
 </main>
 
 <footer class="site-footer">
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
+<script src="assets/pianyu.js"></script>
+<script>PY.showSsoNotice(); PY.mountHeader();</script>
 </body>
 </html>
