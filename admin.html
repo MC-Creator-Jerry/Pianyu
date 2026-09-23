@@ -29,18 +29,10 @@
 <main class="wrap">
   <!-- login -->
   <section id="loginPanel" class="panel" style="max-width:420px">
-    <h2>管理员登录</h2>
-    <div class="field">
-      <label>密码</label>
-      <input id="pw" class="input" type="password" autocomplete="current-password" placeholder="管理员密码">
-    </div>
-    <button id="btnLogin" class="btn primary">登录</button>
+    <h2>管理台 · 已开放</h2>
+    <p class="hint">管理员密码已取消，管理台对全网开放。正在自动进入…</p>
+    <button id="btnLogin" class="btn primary">进入管理台</button>
     <div id="loginMsg"></div>
-    <p class="hint" style="margin-top:12px">
-      密码由 Pages 密钥 <code>PIANYU_ADMIN_PASSWORD</code> 提供。若未设置，登录会返回
-      <code>not_configured</code>，需先执行：<br>
-      <code>wrangler pages secret put PIANYU_ADMIN_PASSWORD --project-name jerrypianyu</code>
-    </p>
   </section>
 
   <!-- admin -->
@@ -177,12 +169,10 @@
   }
 
   $('btnLogin').onclick = async () => {
-    const pw = $('pw').value;
-    const { res, data } = await PY.api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: pw }) });
-    if (res.ok) { $('pw').value = ''; msg($('loginMsg'), ''); showAdmin(); }
-    else msg($('loginMsg'), '登录失败：' + ((data && data.error) || res.status) + (data && data.hint ? ' — ' + data.hint : ''), 'err');
+    const { res, data } = await PY.api('/api/admin/login', { method: 'POST', body: JSON.stringify({}) });
+    if (res.ok) { msg($('loginMsg'), ''); showAdmin(); }
+    else msg($('loginMsg'), '进入失败：' + ((data && data.error) || res.status), 'err');
   };
-  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btnLogin').click(); });
 
   $('btnLogout').onclick = async () => {
     await PY.api('/api/admin/logout', { method: 'POST' });
@@ -192,7 +182,15 @@
   $('btnSave').onclick = save;
   $('btnCancel').onclick = resetForm;
 
-  PY.isAdmin().then((ok) => { ok ? showAdmin() : (loginPanel.style.display = 'block'); });
+  // Password removed per owner request: the panel is open.
+  // On load, if not already an admin, auto-obtain an open session.
+  (async () => {
+    const ok = await PY.isAdmin();
+    if (ok) { showAdmin(); return; }
+    const r = await PY.api('/api/admin/login', { method: 'POST', body: JSON.stringify({}) });
+    if (r.res.ok) showAdmin();
+    else { loginPanel.style.display = 'block'; msg($('loginMsg'), '进入管理台失败：' + ((r.data && r.data.error) || r.res.status), 'err'); }
+  })();
   PY.showSsoNotice();
   PY.mountHeader();
 })();
