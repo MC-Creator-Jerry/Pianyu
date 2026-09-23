@@ -177,3 +177,78 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
   .row2 { grid-template-columns: 1fr; }
   .brand .sub { display: none; }
 }
+
+/* ---------------- nav ---------------- */
+.nav { display: flex; gap: 4px; align-items: center; }
+.nav a {
+  color: var(--muted);
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+.nav a:hover { color: var(--text); background: var(--panel); text-decoration: none; }
+.nav a.on { color: #05121a; background: linear-gradient(120deg, var(--accent), var(--accent-2)); font-weight: 600; }
+
+/* ---------------- 定点屿论 (danmaku) ---------------- */
+.player-wrap { position: relative; }
+.dm-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 62%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+.dm-item {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  animation-name: dm-fly;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes dm-fly {
+  from { left: 100%; }
+  to { left: 0; transform: translateX(-100%); }
+}
+.dm-bar { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; flex-wrap: wrap; }
+.dm-bar .input { flex: 1; min-width: 200px; }
+.dm-hint { font-size: 12px; color: var(--muted); }
+
+/* ---------------- 屿论 (comments) ---------------- */
+.yulun h2 { font-size: 17px; margin: 26px 0 12px; display: flex; align-items: center; gap: 8px; }
+.yulun .count { color: var(--muted); font-size: 13px; font-weight: 400; }
+.cm-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.cm-form .row { display: flex; gap: 8px; }
+.cm-form .row .input { flex: 1; }
+.cm-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 40px; }
+.cm-item {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 14px;
+}
+.cm-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 5px; }
+.cm-head .who { font-weight: 600; font-size: 14px; color: var(--accent); }
+.cm-head .when { font-size: 12px; color: var(--muted); }
+.cm-text { font-size: 14px; line-height: 1.65; color: #d6e0ef; white-space: pre-wrap; word-break: break-word; }
+
+/* ---------------- 岛图 (site map) ---------------- */
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; margin: 24px 0 60px; }
+.map-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 18px 20px;
+  transition: border-color 0.14s ease, transform 0.14s ease;
+  display: block;
+}
+.map-card:hover { border-color: var(--accent); transform: translateY(-3px); text-decoration: none; }
+.map-card .ic { font-size: 26px; }
+.map-card .nm { font-size: 16px; font-weight: 700; margin: 8px 0 6px; color: var(--text); }
+.map-card .ds { font-size: 13px; color: var(--muted); line-height: 1.65; }
+.map-title { font-size: 24px; font-weight: 700; margin: 26px 0 4px; }
+.map-sub { color: var(--muted); font-size: 14px; }
