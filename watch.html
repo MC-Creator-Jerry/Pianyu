@@ -144,8 +144,13 @@
     }
 
     document.getElementById('title').textContent = v.title;
+    const by = v.author ? (v.author.owner ? '站长' : (v.author.name || '岛民')) : '未知';
+    const byAv = (v.author && !v.author.owner && v.author.avatar)
+      ? `<img class="cm-av" src="${PY.esc(v.author.avatar)}" alt="" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:4px" onerror="this.remove()">`
+      : '';
     document.getElementById('meta').innerHTML =
       `<span>${PY.fmtViews(v.views)} 位岛民看过</span><span>${PY.fmtDate(v.createdAt)}</span>` +
+      `<span>由 ${byAv}${PY.esc(by)} 发布</span>` +
       (v.source === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>');
     document.getElementById('tags').innerHTML = (v.tags || [])
       .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
