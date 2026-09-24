@@ -47,6 +47,24 @@ export async function onRequestPost({ request, env }) {
   const url = String(body.url || '').trim();
   if (!title || !url) return json({ ok: false, error: 'missing_title_or_url' }, 400);
 
+  // 每用户每日上新上限（站长城除外）
+  const DAILY_LIMIT = 6;
+  if (!actor.isOwner) {
+    const day = new Date().toISOString().slice(0, 10); // UTC 日期
+    const who = actor.sub || actor.login || 'unknown';
+    const limitKey = `uplimit:${day}:${who}`;
+    const used = Number(await env.PIANYU_KV.get(limitKey)) || 0;
+    if (used >= DAILY_LIMIT) {
+      return json({
+        ok: false,
+        error: 'daily_limit',
+        limit: DAILY_LIMIT,
+        message: `今天的上新已达上限（每天 ${DAILY_LIMIT} 个），明天再来吧～`,
+      }, 429);
+    }
+    await env.PIANYU_KV.put(limitKey, String(used + 1), { expirationTtl: 60 * 60 * 24 * 2 });
+  }
+
   const videos = await listVideos(env);
   const now = Date.now();
   const video = {
