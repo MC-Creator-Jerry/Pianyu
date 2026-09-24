@@ -183,7 +183,8 @@
       const me = await PY.user.load(true);
       refresh(me);
     } else {
-      msg($('formMsg'), '保存失败：' + ((data && data.error) || res.status), 'err');
+      const m = (data && (data.message || data.error)) || ('HTTP ' + res.status);
+      msg($('formMsg'), '保存失败：' + m, 'err');
     }
   }
 
