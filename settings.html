@@ -75,6 +75,11 @@
         修改小蓝页的昵称或头像后，回到片屿重新登录一次即可同步（或直接刷新页面）。
       </p>
     </div>
+
+    <div class="panel" id="vipPanel">
+      <h2>发布功能升级</h2>
+      <div id="vipBody"><p class="hint">加载中…</p></div>
+    </div>
   </section>
 </main>
 
@@ -110,6 +115,26 @@
   });
   paintSeg();
 
+  /* ---------- 升级状态 ---------- */
+  function renderVip(me) {
+    const box = document.getElementById('vipBody');
+    if (!box) return;
+    const vip = me && me.vip;
+    if (vip && vip.active) {
+      const limit = 6 + (Number(vip.bonus) || 10);
+      box.innerHTML =
+        '<div class="vip-badge">⚡ 已升级 VIP</div>' +
+        '<p class="hint">每日发布上限：<b>' + limit + '</b> / 天</p>' +
+        '<p class="hint">有效期至：<b>' + PY.fmtDate(vip.until) + '</b>（爱发电月付，续费后自动顺延）</p>';
+    } else {
+      box.innerHTML =
+        '<p class="hint">你目前是普通岛民：每日发布上限 6 / 天。发电开通「发布功能升级」后，每日上限 +10，并解锁高级版功能。</p>' +
+        '<a class="btn primary" id="btnAfdian" href="' + PY.AFDIAN_URL + '" target="_blank" rel="noopener">发电 ¥13.25 /月</a>';
+      const b = document.getElementById('btnAfdian');
+      if (b) b.href = PY.afdianUrl(me && me.sub);
+    }
+  }
+
   /* ---------- 档案 ---------- */
   const me = await PY.user.load();
   if (!me) {
@@ -117,6 +142,7 @@
     return;
   }
   document.getElementById('content').style.display = 'block';
+  renderVip(me);
 
   const { res, data } = await PY.api('/api/settings');
   if (res.ok && data && data.ok) {
