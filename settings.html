@@ -79,6 +79,16 @@
     <div class="panel" id="vipPanel">
       <h2>发布功能升级</h2>
       <div id="vipBody"><p class="hint">加载中…</p></div>
+
+      <div class="redeem-box" id="redeemBox" style="display:none">
+        <label for="redeemInput">已有兑换码？贴到这里即可开通 / 续期</label>
+        <div class="redeem-row">
+          <input id="redeemInput" class="input" type="text" maxlength="20"
+                 placeholder="例如 ABCD-2345" autocomplete="off" spellcheck="false">
+          <button id="btnRedeem" class="btn primary">兑换</button>
+        </div>
+        <div id="redeemMsg" class="dm-hint"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -125,12 +135,44 @@
       box.innerHTML =
         '<div class="vip-badge">⚡ 已升级 VIP</div>' +
         '<p class="hint">每日发布上限：<b>' + limit + '</b> / 天</p>' +
-        '<p class="hint">有效期至：<b>' + PY.fmtDate(vip.until) + '</b>（爱发电月付，续费后自动顺延）</p>';
+        '<p class="hint">有效期至：<b>' + PY.fmtDate(vip.until) + '</b>（续费后会收到新码，再兑一次即可顺延）</p>';
     } else {
       box.innerHTML =
         '<p class="hint">你目前是普通岛民：每日发布上限 6 / 天。发电开通「发布功能升级」后，每日上限 +10，并解锁高级版功能。</p>' +
+        '<p class="hint">发电付款后，爱发电会<b>自动发给你一条兑换码</b>，回到本页面贴进下方输入框即可开通。</p>' +
         PY.upgradeCard(me && me.sub);
     }
+  }
+
+  /* ---------- 兑换码 ---------- */
+  async function doRedeem() {
+    const input = document.getElementById('redeemInput');
+    const msg = document.getElementById('redeemMsg');
+    const code = (input && input.value ? input.value : '').trim();
+    if (!code) { msg.textContent = '请输入兑换码'; return; }
+
+    msg.textContent = '兑换中…';
+    const { res, data } = await PY.api('/api/redeem', {
+      method: 'POST',
+      body: JSON.stringify({ code: code }),
+    });
+
+    if (res.ok && data && data.ok) {
+      msg.textContent = '开通成功 ✓ 有效期至 ' + PY.fmtDate(data.vip.until);
+      input.value = '';
+      const fresh = await PY.user.load(true);
+      renderVip(fresh);
+    } else {
+      msg.textContent = (data && data.message) || ('兑换失败：' + ((data && data.error) || res.status));
+    }
+  }
+  const btnRedeem = document.getElementById('btnRedeem');
+  if (btnRedeem) btnRedeem.onclick = doRedeem;
+  const redeemInput = document.getElementById('redeemInput');
+  if (redeemInput) {
+    redeemInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doRedeem();
+    });
   }
 
   /* ---------- 档案 ---------- */
@@ -140,6 +182,8 @@
     return;
   }
   document.getElementById('content').style.display = 'block';
+  const rbox = document.getElementById('redeemBox');
+  if (rbox) rbox.style.display = 'block';
   renderVip(me);
 
   const { res, data } = await PY.api('/api/settings');
