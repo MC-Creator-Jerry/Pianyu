@@ -75,7 +75,7 @@
           <a class="btn primary" id="btnAfdian" href="https://ifdian.net/order/create?plan_id=8ffb1aa0b87711f1b03952540025c377&amp;product_type=0" target="_blank" rel="noopener">发电 ¥13.25 /月</a>
         </div>
       </div>
-      <p class="hint" style="margin-top:12px">发电入口由爱发电提供；完成发电后，站长会为你开通升级权益。</p>
+      <p class="hint" style="margin-top:12px">发电后约 1 分钟内自动开通升级权益（无需站长手动操作）。</p>
     </div>
 
     <div class="panel">
@@ -225,6 +225,9 @@
     // 站长不受每日上限约束，升级入口对站长隐藏
     const up = $('upPanel');
     if (up) up.style.display = (me && me.isAdmin) ? 'none' : 'block';
+    // 发电链接带上当前用户 sub，便于 webhook 自动归因
+    const ba = $('btnAfdian');
+    if (ba) ba.href = PY.afdianUrl(me && me.sub);
     resetForm();
     refresh(me);
   }
