@@ -18,12 +18,15 @@
   <rect x="3" y="3" width="58" height="58" rx="15" fill="none" stroke="url(#gw)" stroke-width="2.5"/>
 
   <!-- 落日 -->
-  <circle cx="32" cy="25" r="11" fill="url(#gw)"/>
+  <circle cx="36" cy="16" r="8" fill="url(#gw)"/>
 
-  <!-- 海浪 -->
-  <path d="M6 49 q5 -4 10 0 t10 0 t10 0 t10 0 t10 0" fill="none" stroke="url(#gw)" stroke-width="2.6" stroke-linecap="round" opacity="0.9"/>
-  <path d="M10 55 q5 -4 10 0 t10 0 t10 0 t10 0" fill="none" stroke="url(#gw)" stroke-width="2.4" stroke-linecap="round" opacity="0.55"/>
+  <!-- 右侧海浪 -->
+  <path d="M45 46 q3.5 -3 7 0 t7 0" fill="none" stroke="url(#gw)" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M45 53 q3.5 -3 7 0 t7 0" fill="none" stroke="url(#gw)" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
 
-  <!-- 小岛：海面上的圆丘 -->
-  <path d="M24 50 C27 39 37 39 40 50 Z" fill="url(#gw)"/>
+  <!-- 中间的岛 -->
+  <path d="M28 51 C31 40 41 40 44 51 Z" fill="url(#gw)"/>
+
+  <!-- 左下角的岸（更大） -->
+  <path d="M4 61 L4 44 C10 41 16 43 21 48 C24 51 25 55 26 61 Z" fill="url(#gw)"/>
 </svg>
