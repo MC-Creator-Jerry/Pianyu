@@ -1,20 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="片屿">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#35d0c0"/>
       <stop offset="1" stop-color="#2b9fe0"/>
     </linearGradient>
+    <style>
+      .bg { fill: #0f1a2e; }
+      @media (prefers-color-scheme: light) {
+        .bg { fill: #eaf2fb; }
+      }
+    </style>
   </defs>
-  <rect x="3" y="3" width="58" height="58" rx="15" fill="#0f1a2e" stroke="url(#g)" stroke-width="2.5"/>
-  <!-- 陆地小岛 -->
-  <path d="M13 45 C19 33 26 29 32 29 C38 29 45 33 51 45 Z" fill="url(#g)"/>
-  <!-- 棕榈树干 -->
-  <path d="M32 29 C31.4 24 32.6 20 32 16" fill="none" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round"/>
-  <!-- 棕榈叶 -->
-  <path d="M32 16 Q24 15 21 22 Q28 20 32 16 Z" fill="url(#g)"/>
-  <path d="M32 16 Q40 15 43 22 Q36 20 32 16 Z" fill="url(#g)"/>
-  <path d="M32 16 Q30 10 34 9 Q34 14 32 16 Z" fill="url(#g)"/>
-  <!-- 海浪 -->
-  <path d="M15 51 q4.5 -4 9 0 t9 0 t9 0 t9 0" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>
-  <path d="M19 56 q4.5 -4 9 0 t9 0 t9 0" fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- 圆角底（随系统深浅主题切换） -->
+  <rect class="bg" x="3" y="3" width="58" height="58" rx="15"/>
+  <rect x="3" y="3" width="58" height="58" rx="15" fill="none" stroke="url(#g)" stroke-width="2.5"/>
+
+  <!-- 太阳 -->
+  <circle cx="45" cy="21" r="6" fill="url(#g)"/>
+
+  <!-- 海（填充波浪） -->
+  <path d="M4 51 Q14 45 24 51 Q34 57 44 51 Q54 45 60 51 L60 61 L4 61 Z" fill="url(#g)" opacity="0.85"/>
+
+  <!-- 小岛：从海面升起 -->
+  <path d="M22 50 C25 37 39 37 42 50 Z" fill="url(#g)"/>
 </svg>
