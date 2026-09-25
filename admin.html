@@ -63,7 +63,19 @@
       <h2>发布功能升级</h2>
       <p class="hint">想让每天能多发一些？开通下面的计划，片屿每日发布上限 +10，并解锁高级版功能。</p>
       <div id="upCardSlot"></div>
-      <p class="hint" style="margin-top:12px">发电后约 1 分钟内自动开通升级权益（无需站长手动操作）。</p>
+      <p class="hint" style="margin-top:12px">发电付款后，爱发电会<b>自动发给你一条兑换码</b>；到「设置 → 发布功能升级」贴进输入框即可开通，续费再兑一次自动顺延。</p>
+    </div>
+
+    <div class="panel" id="codePanel" style="display:none">
+      <h2>兑换码（站长）</h2>
+      <p class="hint">生成一批一次性兑换码，贴进爱发电「赞助奖励」的自动回复里；赞助者付款后会收到一条，回片屿兑换即开通。</p>
+      <div class="code-gen">
+        <button id="btnGenCodes" class="btn primary">生成 20 条新码</button>
+        <span id="codeStat" class="hint"></span>
+      </div>
+      <div id="codeList" class="code-list"></div>
+      <p class="hint" style="margin-top:10px">已用过的码不会被清理；点「清空未使用的码」只会删掉还没人用的。</p>
+      <button id="btnClearCodes" class="btn danger sm">清空未使用的码</button>
     </div>
 
     <div class="panel">
@@ -207,15 +219,67 @@
     }
   }
 
+  /* ---------- 兑换码（仅站长） ---------- */
+  function fmtCode(c) {
+    const s = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return s.length === 8 ? s.slice(0, 4) + '-' + s.slice(4) : s;
+  }
+
+  async function loadCodes() {
+    const list = $('codeList');
+    const stat = $('codeStat');
+    const { res, data } = await PY.api('/api/admin/codes');
+    if (!res.ok || !data || !data.ok) {
+      if (list) list.innerHTML = '<p class="hint">读取失败（仅站长可见）。</p>';
+      return;
+    }
+    const codes = data.codes || [];
+    if (stat) stat.textContent = '共 ' + data.count + ' 条，未使用 ' + (data.unused || 0) + ' 条';
+    if (!list) return;
+    if (!codes.length) { list.innerHTML = '<p class="hint">还没有生成过兑换码。</p>'; return; }
+    list.innerHTML = codes.map((c) => {
+      const when = c.usedAt ? ' · ' + PY.fmtDate(c.usedAt) : '';
+      return '<div class="code-item' + (c.used ? ' used' : '') + '">' +
+        '<code>' + PY.esc(fmtCode(c.code)) + '</code>' +
+        '<span class="st">' + (c.used ? '已使用' + when : '未使用') + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
   function showAdmin(me) {
     adminPanel.style.display = 'block';
     document.getElementById('gate').style.display = 'none';
     // 站长不受每日上限约束，升级入口对站长隐藏
     const up = $('upPanel');
     if (up) up.style.display = (me && me.isAdmin) ? 'none' : 'block';
-    // 渲染全站统一的升级卡片（与设置页共用 PY.upgradeCard），并带上用户 sub 便于 webhook 归因
+    // 渲染全站统一的升级卡片（与设置页共用 PY.upgradeCard）
     const slot = $('upCardSlot');
     if (slot) slot.innerHTML = PY.upgradeCard(me && me.sub);
+    // 兑换码面板仅站长可见
+    const cp = $('codePanel');
+    if (cp) cp.style.display = (me && me.isAdmin) ? 'block' : 'none';
+    if (me && me.isAdmin) {
+      const gen = $('btnGenCodes');
+      if (gen) gen.onclick = async () => {
+        gen.disabled = true;
+        gen.textContent = '生成中…';
+        const { res, data } = await PY.api('/api/admin/codes', {
+          method: 'POST',
+          body: JSON.stringify({ count: 20 }),
+        });
+        gen.disabled = false;
+        gen.textContent = '生成 20 条新码';
+        if (res.ok && data && data.ok) loadCodes();
+        else alert('生成失败：' + ((data && data.error) || res.status));
+      };
+      const clr = $('btnClearCodes');
+      if (clr) clr.onclick = async () => {
+        if (!confirm('确定清空所有「未使用」的兑换码？已用过的会保留。')) return;
+        const { res } = await PY.api('/api/admin/codes', { method: 'DELETE' });
+        if (res.ok) loadCodes();
+      };
+      loadCodes();
+    }
     resetForm();
     refresh(me);
   }
