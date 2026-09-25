@@ -79,6 +79,11 @@ window.PY = {
   },
 };
 
+/* 爱发电「发布功能升级」计划下单地址（全站统一入口） */
+PY.AFDIAN_URL =
+  'https://ifdian.net/order/create?plan_id=8ffb1aa0b87711f1b03952540025c377&product_type=0';
+PY.AFDIAN_PRICE = '¥13.25';
+
 /* ============================================================
    深浅模式
    localStorage: pianyu-theme = 'dark' | 'light' | 'auto'
@@ -212,6 +217,7 @@ PY.user = {
       '<div class="sep"></div>' +
       '<a role="menuitem" href="profile.html">我的主页</a>' +
       '<a role="menuitem" href="settings.html">设置</a>' +
+      '<a role="menuitem" href="' + PY.AFDIAN_URL + '" target="_blank" rel="noopener">⚡ 发电支持 · 升级</a>' +
       '<div class="sep"></div>' +
       '<button role="menuitem" id="logoutBtn">退出登录</button>' +
       '</div>';
