@@ -219,6 +219,17 @@ a:hover { text-decoration: underline; }
 .plan-cta { flex: none; }
 .plan-cta .btn { padding: 12px 22px; }
 
+/* ---------------- 升级状态（设置页 / VIP 角标） ---------------- */
+.vip-badge {
+  display: inline-block;
+  font-size: 13px; font-weight: 700;
+  color: var(--on-accent);
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  border-radius: 999px; padding: 5px 14px; margin-bottom: 10px;
+}
+.hint b { color: var(--text); font-weight: 600; }
+.badge.vip { color: var(--accent); border-color: rgba(53,208,192,0.4); background: rgba(53,208,192,0.14); }
+
 footer.site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; padding: 22px 0 34px; margin-top: 40px; }
 footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
