@@ -5,7 +5,16 @@
       <stop offset="1" stop-color="#2b9fe0"/>
     </linearGradient>
   </defs>
-  <rect x="2" y="2" width="60" height="60" rx="15" fill="#0f1a2e" stroke="url(#g)" stroke-width="2.5"/>
-  <path d="M20 42c4-2 7-3 12-3s8 1 12 3" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M26 18 L44 27 L26 36 Z" fill="url(#g)"/>
+  <rect x="3" y="3" width="58" height="58" rx="15" fill="#0f1a2e" stroke="url(#g)" stroke-width="2.5"/>
+  <!-- 陆地小岛 -->
+  <path d="M13 45 C19 33 26 29 32 29 C38 29 45 33 51 45 Z" fill="url(#g)"/>
+  <!-- 棕榈树干 -->
+  <path d="M32 29 C31.4 24 32.6 20 32 16" fill="none" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- 棕榈叶 -->
+  <path d="M32 16 Q24 15 21 22 Q28 20 32 16 Z" fill="url(#g)"/>
+  <path d="M32 16 Q40 15 43 22 Q36 20 32 16 Z" fill="url(#g)"/>
+  <path d="M32 16 Q30 10 34 9 Q34 14 32 16 Z" fill="url(#g)"/>
+  <!-- 海浪 -->
+  <path d="M15 51 q4.5 -4 9 0 t9 0 t9 0 t9 0" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>
+  <path d="M19 56 q4.5 -4 9 0 t9 0 t9 0" fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
 </svg>
