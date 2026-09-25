@@ -62,19 +62,7 @@
     <div class="panel" id="upPanel">
       <h2>发布功能升级</h2>
       <p class="hint">想让每天能多发一些？开通下面的计划，片屿每日发布上限 +10，并解锁高级版功能。</p>
-      <div class="plan-card">
-        <div class="plan-main">
-          <div class="plan-name">片屿 · 发布功能升级</div>
-          <div class="plan-price">¥13.25<span>/月</span></div>
-          <ul class="plan-benefits">
-            <li>开通后片屿每日发布帖子上限 +10</li>
-            <li>解锁高级版功能</li>
-          </ul>
-        </div>
-        <div class="plan-cta">
-          <a class="btn primary" id="btnAfdian" href="https://ifdian.net/order/create?plan_id=8ffb1aa0b87711f1b03952540025c377&amp;product_type=0" target="_blank" rel="noopener">发电 ¥13.25 /月</a>
-        </div>
-      </div>
+      <div id="upCardSlot"></div>
       <p class="hint" style="margin-top:12px">发电后约 1 分钟内自动开通升级权益（无需站长手动操作）。</p>
     </div>
 
@@ -225,9 +213,9 @@
     // 站长不受每日上限约束，升级入口对站长隐藏
     const up = $('upPanel');
     if (up) up.style.display = (me && me.isAdmin) ? 'none' : 'block';
-    // 发电链接带上当前用户 sub，便于 webhook 自动归因
-    const ba = $('btnAfdian');
-    if (ba) ba.href = PY.afdianUrl(me && me.sub);
+    // 渲染全站统一的升级卡片（与设置页共用 PY.upgradeCard），并带上用户 sub 便于 webhook 归因
+    const slot = $('upCardSlot');
+    if (slot) slot.innerHTML = PY.upgradeCard(me && me.sub);
     resetForm();
     refresh(me);
   }
