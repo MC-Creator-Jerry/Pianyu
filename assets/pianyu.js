@@ -91,6 +91,26 @@ PY.afdianUrl = function (sub) {
   return PY.AFDIAN_URL + '&custom_order_id=' + encodeURIComponent('pianyu:' + sub);
 };
 
+// 全站统一的「发布功能升级」卡片（上新页 + 设置页共用同一套结构 / 同一份文案）。
+// sub 带上当前用户标识，便于爱发电 webhook 自动归因发放权益。
+PY.upgradeCard = function (sub) {
+  return (
+    '<div class="plan-card">' +
+      '<div class="plan-main">' +
+        '<div class="plan-name">片屿 · 发布功能升级</div>' +
+        '<div class="plan-price">' + PY.AFDIAN_PRICE + '<span>/月</span></div>' +
+        '<ul class="plan-benefits">' +
+          '<li>开通后片屿每日发布帖子上限 +10</li>' +
+          '<li>解锁高级版功能</li>' +
+        '</ul>' +
+      '</div>' +
+      '<div class="plan-cta">' +
+        '<a class="btn primary" href="' + PY.afdianUrl(sub) + '" target="_blank" rel="noopener">发电 ' + PY.AFDIAN_PRICE + ' /月</a>' +
+      '</div>' +
+    '</div>'
+  );
+};
+
 /* ============================================================
    深浅模式
    localStorage: pianyu-theme = 'dark' | 'light' | 'auto'
