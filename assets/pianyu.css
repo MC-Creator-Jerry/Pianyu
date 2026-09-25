@@ -227,6 +227,29 @@ a:hover { text-decoration: underline; }
 .plan-cta { flex: none; }
 .plan-cta .btn { padding: 12px 22px; }
 
+/* ---------------- 兑换码 ---------------- */
+.redeem-box { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.redeem-box label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.redeem-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.redeem-row .input { flex: 1; min-width: 180px; text-transform: uppercase; letter-spacing: 2px; }
+.redeem-row .btn { flex: none; }
+#redeemMsg { margin-top: 8px; font-size: 13px; min-height: 18px; }
+
+.code-gen { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.code-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px; max-height: 320px; overflow-y: auto;
+}
+.code-item {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel-2); font-size: 13px;
+}
+.code-item code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 1px; }
+.code-item .st { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.code-item.used { opacity: 0.55; }
+.code-item.used code { text-decoration: line-through; }
+
 /* ---------------- 升级状态（设置页 / VIP 角标） ---------------- */
 .vip-badge {
   display: inline-block;
@@ -246,6 +269,8 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
   .brand .sub { display: none; }
   .plan-cta { width: 100%; }
   .plan-cta .btn { width: 100%; }
+  .redeem-row .btn { width: 100%; }
+  .code-list { grid-template-columns: 1fr; }
 }
 
 /* ---------------- nav ---------------- */
