@@ -59,6 +59,25 @@
       <div id="formMsg"></div>
     </div>
 
+    <div class="panel" id="upPanel">
+      <h2>发布功能升级</h2>
+      <p class="hint">想让每天能多发一些？开通下面的计划，片屿每日发布上限 +10，并解锁高级版功能。</p>
+      <div class="plan-card">
+        <div class="plan-main">
+          <div class="plan-name">片屿 · 发布功能升级</div>
+          <div class="plan-price">¥13.25<span>/月</span></div>
+          <ul class="plan-benefits">
+            <li>开通后片屿每日发布帖子上限 +10</li>
+            <li>解锁高级版功能</li>
+          </ul>
+        </div>
+        <div class="plan-cta">
+          <a class="btn primary" id="btnAfdian" href="https://ifdian.net/order/create?plan_id=8ffb1aa0b87711f1b03952540025c377&amp;product_type=0" target="_blank" rel="noopener">发电 ¥13.25 /月</a>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:12px">发电入口由爱发电提供；完成发电后，站长会为你开通升级权益。</p>
+    </div>
+
     <div class="panel">
       <h2>我的投稿（<span id="myCnt">0</span>）</h2>
       <p class="hint">这里只列你用自己的小蓝页账户投过的视频，可随时编辑或删除。</p>
@@ -82,6 +101,11 @@
 
   function msg(el, text, type) {
     el.innerHTML = text ? `<div class="notice ${type || 'ok'}">${PY.esc(text)}</div>` : '';
+  }
+
+  // 与 msg 相同，但不转义（用于内嵌链接）
+  function msgHtml(el, html, type) {
+    el.innerHTML = html ? `<div class="notice ${type || 'ok'}">${html}</div>` : '';
   }
 
   function isMod(v, me) {
@@ -182,6 +206,13 @@
       resetForm();
       const me = await PY.user.load(true);
       refresh(me);
+    } else if (data && data.error === 'daily_limit') {
+      msgHtml(
+        $('formMsg'),
+        '保存失败：' + PY.esc(data.message || '今天的上新已达上限') +
+          '　<a href="' + PY.AFDIAN_URL + '" target="_blank" rel="noopener">发电升级，每天 +10 →</a>',
+        'err'
+      );
     } else {
       const m = (data && (data.message || data.error)) || ('HTTP ' + res.status);
       msg($('formMsg'), '保存失败：' + m, 'err');
@@ -191,6 +222,9 @@
   function showAdmin(me) {
     adminPanel.style.display = 'block';
     document.getElementById('gate').style.display = 'none';
+    // 站长不受每日上限约束，升级入口对站长隐藏
+    const up = $('upPanel');
+    if (up) up.style.display = (me && me.isAdmin) ? 'none' : 'block';
     resetForm();
     refresh(me);
   }
