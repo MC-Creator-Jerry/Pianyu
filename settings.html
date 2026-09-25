@@ -129,9 +129,7 @@
     } else {
       box.innerHTML =
         '<p class="hint">你目前是普通岛民：每日发布上限 6 / 天。发电开通「发布功能升级」后，每日上限 +10，并解锁高级版功能。</p>' +
-        '<a class="btn primary" id="btnAfdian" href="' + PY.AFDIAN_URL + '" target="_blank" rel="noopener">发电 ¥13.25 /月</a>';
-      const b = document.getElementById('btnAfdian');
-      if (b) b.href = PY.afdianUrl(me && me.sub);
+        PY.upgradeCard(me && me.sub);
     }
   }
 
