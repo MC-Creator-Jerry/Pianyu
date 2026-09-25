@@ -220,6 +220,7 @@ PY.user = {
       '<div class="menu hide" id="userMenu" role="menu">' +
       '<div class="hd"><div class="n">' + PY.esc(u.name || u.login || '岛民') +
       (u.isAdmin ? '<span class="badge">站长</span>' : '') +
+      (u.vip && u.vip.active ? '<span class="badge">⚡VIP</span>' : '') +
       '</div><div class="l">' + PY.esc(u.login ? '@' + u.login : '小蓝页账户') + '</div></div>' +
       '<div class="sep"></div>' +
       '<a role="menuitem" href="profile.html">我的主页</a>' +
