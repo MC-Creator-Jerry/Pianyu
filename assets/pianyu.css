@@ -704,3 +704,32 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
 .wt-badge.wt-derivative { color: #b06a00; border-color: rgba(176,106,0,.4); background: rgba(176,106,0,.12); }
 .wt-badge.wt-remix { color: #7a4fd0; border-color: rgba(122,79,208,.4); background: rgba(122,79,208,.12); }
 .wt-badge.wt-repost { color: #8a8f98; border-color: rgba(138,143,152,.4); background: rgba(138,143,152,.12); }
+
+/* 观看页：管理员举报审核条 */
+.report-review {
+  position: sticky; top: 12px; z-index: 30; margin: 14px auto 0; max-width: 820px;
+}
+.rr-card {
+  border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  background: var(--panel); box-shadow: var(--shadow);
+}
+.rr-head {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  font-weight: 700; font-size: 14px; background: var(--panel-2); border-bottom: 1px solid var(--line);
+}
+.rr-close { margin-left: auto; cursor: pointer; font-size: 20px; line-height: 1; color: var(--muted); padding: 0 4px; }
+.rr-close:hover { color: var(--text); }
+.rr-body { padding: 12px 14px; font-size: 14px; color: var(--text-2); }
+.rr-line { margin: 4px 0; }
+.rr-line b { color: var(--text); font-weight: 600; }
+.rr-text { white-space: pre-wrap; word-break: break-word; margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--panel-2); }
+.rr-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 14px 14px; }
+.btn.ghost {
+  background: transparent; border: 1px solid var(--line); color: var(--muted);
+}
+.btn.ghost:hover { color: var(--text); border-color: var(--accent); }
+
+/* 被举报的屿论：从审核条跳转过来时高亮 */
+.cm-item.cm-flagged {
+  border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,90,95,.25);
+}
