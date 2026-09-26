@@ -336,6 +336,20 @@ PY.user = {
     const afd = wrap.querySelector('#afdianItem');
     if (afd) afd.href = PY.afdianUrl(u && u.sub);
 
+    // 管理员：在「设置」下方额外显示「管理员」入口（仅管理员可见，异步确认不阻塞菜单）
+    PY.isAdmin().then((ok) => {
+      if (!ok) return;
+      const setItem = menu.querySelector('a[href="settings.html"]');
+      if (!setItem) return;
+      const a = document.createElement('a');
+      a.setAttribute('role', 'menuitem');
+      a.href = 'settings.html#adminPanel';
+      a.textContent = '管理员 · 举报处理';
+      a.style.color = 'var(--accent)';
+      a.style.fontWeight = '600';
+      setItem.insertAdjacentElement('afterend', a);
+    }).catch(() => {});
+
     const btn = wrap.querySelector('#avatarBtn');
     const menu = wrap.querySelector('#userMenu');
 
