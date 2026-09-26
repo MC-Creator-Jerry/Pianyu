@@ -14,6 +14,7 @@ export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
   const tag = (url.searchParams.get('tag') || '').trim().toLowerCase();
+  const sort = (url.searchParams.get('sort') || 'time').trim();
 
   const all = await listVideos(env);
   const tags = [...new Set(all.flatMap((v) => v.tags || []))].sort();
@@ -28,7 +29,11 @@ export async function onRequestGet({ request, env }) {
   if (tag) {
     videos = videos.filter((v) => (v.tags || []).map((t) => t.toLowerCase()).includes(tag));
   }
-  videos = videos.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  if (sort === 'views') {
+    videos = videos.slice().sort((a, b) => (b.views || 0) - (a.views || 0));
+  } else {
+    videos = videos.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }
 
   return json({ ok: true, count: videos.length, tags, videos });
 }
@@ -82,6 +87,7 @@ export async function onRequestPost({ request, env }) {
     source: body.source === 'embed' ? 'embed' : 'file',
     cover: String(body.cover || '').trim(),
     duration: String(body.duration || '').trim(),
+    workType: ['original', 'derivative', 'remix', 'repost'].includes(body.workType) ? body.workType : 'original',
     author: actor.isOwner
       ? { owner: true, name: actor.name || '站长' }
       : { sub: actor.sub, login: actor.login, name: actor.name, avatar: actor.avatar },
