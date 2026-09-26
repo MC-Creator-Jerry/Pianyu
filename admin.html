@@ -6,7 +6,7 @@
 <title>上新 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260928">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260929">
 </head>
 <body>
 <header class="site-header">
@@ -51,6 +51,14 @@
           </select>
         </div>
         <div class="field"><label>时长（可选，如 03:24）</label><input id="fDuration" class="input" placeholder="03:24"></div>
+      </div>
+      <div class="field"><label>作品类型</label>
+        <select id="fWorkType" class="select">
+          <option value="original">原创</option>
+          <option value="derivative">二创</option>
+          <option value="remix">三创及以上</option>
+          <option value="repost">搬运</option>
+        </select>
       </div>
       <div class="field"><label>封面图地址（可选）</label><input id="fCover" class="input" placeholder="https://.../cover.jpg"></div>
       <div class="field"><label>标签（逗号或空格分隔，可选）</label><input id="fTags" class="input" placeholder="电影, 旅行, 音乐"></div>
@@ -100,7 +108,7 @@
 
 <footer class="site-footer"><div class="wrap"><span>© 片屿 · PIANYU</span></div></footer>
 
-<script src="assets/pianyu.js?v=20260930"></script>
+<script src="assets/pianyu.js?v=20260931"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -176,6 +184,7 @@
     $('fTitle').value = v.title || '';
     $('fUrl').value = v.url || '';
     $('fSource').value = v.source || 'file';
+    $('fWorkType').value = v.workType || 'original';
     $('fDuration').value = v.duration || '';
     $('fCover').value = v.cover || '';
     $('fTags').value = (v.tags || []).join(', ');
@@ -201,6 +210,7 @@
       source: $('fSource').value,
       duration: $('fDuration').value.trim(),
       cover: $('fCover').value.trim(),
+      workType: $('fWorkType').value,
       tags: $('fTags').value,
       desc: $('fDesc').value.trim(),
     };
@@ -349,6 +359,6 @@
   PY.mountHeader();
 })();
 </script>
-  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
+  <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
