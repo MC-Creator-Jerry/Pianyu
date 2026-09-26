@@ -94,16 +94,16 @@
 
     <!-- 管理员专属：设置下方的独立入口（仅站长 / 管理员账户可见） -->
     <div class="panel" id="adminEntry" style="display:none">
-      <h2>管理员</h2>
+      <h2>管理员面板</h2>
       <p class="hint">你是片屿的管理员，可处理岛民提交的举报。</p>
-      <div><button id="btnOpenAdmin" class="btn primary" type="button">举报处理 →</button></div>
+      <div><button id="btnOpenAdmin" class="btn primary" type="button">进入管理员面板 →</button></div>
     </div>
   </section>
 
-  <!-- 管理员 · 举报处理（点上面按钮展开；也可用 #adminPanel 直接进入） -->
+  <!-- 管理员面板（点上面按钮展开；也可用 #adminPanel 直接进入） -->
   <section id="adminSection" style="display:none">
     <div class="panel" id="adminPanel">
-      <h2>管理员 · 举报处理 <span id="reportCount" style="font-size:13px;color:var(--accent);font-weight:600;margin-left:6px"></span></h2>
+      <h2>管理员面板 · 举报处理 <span id="reportCount" style="font-size:13px;color:var(--accent);font-weight:600;margin-left:6px"></span></h2>
       <p class="hint">点「跳转查看」前往被举报内容核对，处理完会自动回到这里并定位到原位置。</p>
       <div id="reportList" class="report-list"></div>
       <p><button id="btnCloseAdmin" class="btn ghost" type="button">收起</button></p>
@@ -119,7 +119,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260936"></script>
+<script src="assets/pianyu.js?v=20260937"></script>
 <script>
 (async function () {
   document.getElementById('yr').textContent = new Date().getFullYear();
