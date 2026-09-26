@@ -251,7 +251,7 @@ a:hover { text-decoration: underline; }
 .code-item.used code { text-decoration: line-through; }
 
 /* ============================================================
-   屿作台（创作者工作台）
+   创作岛（创作者工作台）
    左侧竖导航 + 右侧工作区；移动端折叠为顶部横向滚动条
    ============================================================ */
 .creator-shell { display: flex; gap: 22px; align-items: flex-start; margin-top: 6px; }
