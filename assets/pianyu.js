@@ -82,6 +82,49 @@ window.PY = {
     const { data } = await this.api('/api/admin/me');
     return !!(data && data.loggedIn);
   },
+
+  // 举报处理面板渲染（站长「上新」页 + 管理员控制台共用）
+  // box: 列表容器元素；cnt: 计数元素（可选）
+  async renderReports(box, cnt) {
+    if (!box) return;
+    const { res, data } = await PY.api('/api/admin/reports');
+    if (!res.ok || !data || !data.ok) {
+      box.innerHTML = '<p class="hint">读取失败（仅管理员可见）。</p>';
+      if (cnt) cnt.textContent = '0';
+      return;
+    }
+    const rs = data.reports || [];
+    if (cnt) cnt.textContent = rs.length;
+    if (!rs.length) { box.innerHTML = '<p class="hint">暂无待处理的举报。</p>'; return; }
+    const REASON_TXT = { spam: '垃圾广告/刷屏', abuse: '不当或有害内容', copyright: '侵权/未授权', other: '其他' };
+    const KIND_TXT = { video: '视频', comment: '屿论', danmaku: '定点屿论' };
+    box.innerHTML = rs.map((r) => {
+      const kind = KIND_TXT[r.kind] || r.kind;
+      const reason = REASON_TXT[r.reason] || '其他';
+      const target = r.kind === 'video' ? '' : ('<span class="rt">目标 ID：' + PY.esc(r.targetId) + '</span>');
+      return '<div class="report-item" data-id="' + PY.esc(r.id) + '">' +
+        '<div class="r-top"><span class="r-kind">' + PY.esc(kind) + '</span>' +
+          '<a class="r-video" href="watch.html?id=' + encodeURIComponent(r.videoId) + '" target="_blank">' + PY.esc(r.videoTitle || r.videoId) + '</a>' +
+          '<span class="r-when">' + PY.fmtDate(r.createdAt) + '</span></div>' +
+        '<div class="r-meta"><span class="r-reason">理由：' + PY.esc(reason) + '</span>' +
+          '<span class="r-by">举报人：' + PY.esc(r.name) + (r.login ? ' @' + PY.esc(r.login) : '') + '</span>' + target + '</div>' +
+        (r.text ? '<div class="r-text">' + PY.esc(r.text) + '</div>' : '') +
+        '<div class="r-actions">' +
+          '<button class="btn sm" data-act="resolve">已处理</button>' +
+          '<button class="btn sm danger" data-act="delete">删除内容</button>' +
+        '</div></div>';
+    }).join('');
+    box.querySelectorAll('[data-act]').forEach((b) => {
+      b.onclick = async () => {
+        const id = b.closest('.report-item').dataset.id;
+        const act = b.dataset.act;
+        if (act === 'delete' && !confirm('确定删除被举报的内容？视频将整体删除，屿论/定点屿论仅删该条。')) return;
+        const { res: r2, data: d2 } = await PY.api('/api/admin/reports', { method: 'POST', body: JSON.stringify({ id, action: act }) });
+        if (r2.ok) PY.renderReports(box, cnt);
+        else alert('操作失败：' + ((d2 && d2.error) || r2.status));
+      };
+    });
+  },
 };
 
 /* 爱发电「发布功能升级」计划下单地址（全站统一入口） */
