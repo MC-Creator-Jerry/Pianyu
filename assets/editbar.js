@@ -54,7 +54,7 @@
     if (editbarCssReady()) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = '/assets/editbar.css?v=20260926a';
+    link.href = '/assets/editbar.css?v=20260926b';
     document.head.appendChild(link);
   }
 
