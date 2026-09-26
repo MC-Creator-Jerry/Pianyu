@@ -331,3 +331,40 @@ PY.showSsoNotice = function () {
 // 立刻应用主题（避免首屏闪白/闪黑），随后再挂载交互
 PY.theme.apply(PY.theme.resolve());
 
+/* ---------------- 管理员「更改页面布局」按钮（仿小蓝页，仅站主可见） ---------------- */
+// 编辑器 editbar.js 站点无关：用 /api/page-edit 相对路径 + curPath()，一套代码覆盖四站。
+PY.EDITBAR_VER = '20260926b';
+PY.loadEditbar = function () {
+  if (window.XLEdit) return;
+  var s = document.createElement('script');
+  s.src = '/assets/editbar.js?v=' + PY.EDITBAR_VER;
+  s.async = true;
+  document.head.appendChild(s);
+};
+PY.maybeInjectLayoutBtn = function () {
+  if (document.getElementById('editLayoutBtn')) return;
+  var fa = document.querySelector('.float-actions');
+  if (!fa) {
+    fa = document.createElement('div');
+    fa.className = 'float-actions';
+    document.body.appendChild(fa);
+  }
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'fab xl-edit-fab';
+  b.id = 'editLayoutBtn';
+  b.title = '更改当前页面布局';
+  b.setAttribute('aria-label', '更改当前页面布局');
+  b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+  b.addEventListener('click', function () { if (window.XLEdit) window.XLEdit.open(); });
+  fa.appendChild(b);
+};
+
+// 进入页面后：加载编辑器；仅站主插入布局按钮
+document.addEventListener('DOMContentLoaded', function () {
+  PY.loadEditbar();
+  PY.isAdmin().then(function (ok) {
+    if (ok) PY.maybeInjectLayoutBtn();
+  }).catch(function () {});
+});
+
