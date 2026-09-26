@@ -13,27 +13,47 @@ import { getSession as getAdminSession } from '../../_lib/store.js';
 import { parseCookie, json, COOKIE as ADMIN_COOKIE } from '../../_lib/auth.js';
 import { getSession as getSsoSession } from '../../_lib/pyauth.js';
 
+const OWNER = 'MC-Creator-Jerry';
+
+function userFrom(sess) {
+  return sess
+    ? {
+        login: sess.login || null,
+        name: sess.name || null,
+        avatar_url: sess.avatar_url || '',
+        sub: sess.sub || null,
+      }
+    : null;
+}
+
 export async function onRequestGet({ request, env }) {
-  // 1) 站长（SSO）
+  // 1) 岛民 SSO 会话（pianyu_uid）：站主 = isAdmin 标记 或 login === OWNER
   let sso = null;
   try {
     sso = await getSsoSession({ request, env });
   } catch (e) {
     sso = null;
   }
-  if (sso && sso.isAdmin) {
+  if (sso) {
+    const isOwner = sso.login === OWNER;
+    if (sso.isAdmin || isOwner) {
+      return json({
+        ok: true,
+        loggedIn: true,
+        isAdmin: true,
+        kind: sso.isAdmin ? 'owner' : 'owner-login',
+        login: sso.login || null,
+        user: userFrom(sso),
+      });
+    }
+    // 已登录但非管理员：仍要返回 login/user，供前端做精确判定
     return json({
       ok: true,
       loggedIn: true,
-      isAdmin: true,
-      kind: 'owner',
+      isAdmin: false,
+      kind: null,
       login: sso.login || null,
-      user: {
-        login: sso.login || null,
-        name: sso.name || null,
-        avatar_url: sso.avatar_url || '',
-        sub: sso.sub || null,
-      },
+      user: userFrom(sso),
     });
   }
 
