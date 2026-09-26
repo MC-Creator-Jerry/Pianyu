@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>片屿 · 视频</title>
 <meta name="description" content="片屿 —— 一座收藏与分享视频的小岛。岛民在此上新、看片、聊屿论。">
+<meta property="og:type" content="website" />
+<meta property="og:title" content="片屿 · 视频" />
+<meta property="og:description" content="片屿 —— 一座收藏与分享视频的小岛。岛民在此上新、看片、聊屿论。" />
+<meta property="og:site_name" content="片屿 PIANYU" />
+<meta property="og:url" content="https://jerrypianyu.pages.dev/" />
+<meta property="og:image" content="https://jerrypianyu.pages.dev/assets/favicon.svg?v=6" />
+<meta name="theme-color" content="#0ea5e9" />
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260926">
 </head>
 <body>
 <header class="site-header">
@@ -21,6 +28,7 @@
       <a href="index.html" class="on">首页</a>
       <a href="map.html">岛图</a>
       <a href="admin.html">上新</a>
+      <a href="creator.html">屿作台</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -44,7 +52,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js"></script>
+<script src="assets/pianyu.js?v=20260929"></script>
 <script>
 (function () {
   const grid = document.getElementById('grid');
@@ -104,5 +112,6 @@
   PY.mountHeader();
 })();
 </script>
+  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
 </body>
 </html>
