@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260926">
 </head>
 <body>
 <header class="site-header">
@@ -20,6 +20,7 @@
       <a href="index.html">首页</a>
       <a href="map.html">岛图</a>
       <a href="admin.html">上新</a>
+      <a href="creator.html">屿作台</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -62,7 +63,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js"></script>
+<script src="assets/pianyu.js?v=20260929"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -247,5 +248,6 @@
   load();
 })();
 </script>
+  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
 </body>
 </html>
