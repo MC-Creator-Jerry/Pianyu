@@ -56,8 +56,8 @@ window.PY = {
     const a = document.createElement('a');
     a.className = 'card';
     a.href = 'watch.html?id=' + encodeURIComponent(v.id);
-    const wt = v.workType || 'original';
-    const wtTxt = (window.PY.WORK_TYPES && window.PY.WORK_TYPES[wt]) || '原创';
+    const wt = v.workType;
+    const wtTxt = wt ? ((window.PY.WORK_TYPES && window.PY.WORK_TYPES[wt]) || wt) : '';
     const tags = (v.tags || [])
       .map((t) => `<span class="tag">${window.PY.esc(t)}</span>`)
       .join('');
@@ -71,7 +71,7 @@ window.PY = {
         ${v.duration ? `<span class="dur">${window.PY.esc(v.duration)}</span>` : ''}
       </div>
       <div class="body">
-        <div class="title">${window.PY.esc(v.title)} <span class="wt-badge wt-${wt}">${wtTxt}</span></div>
+        <div class="title">${window.PY.esc(v.title)}${wt ? ` <span class="wt-badge wt-${wt}">${wtTxt}</span>` : ''}</div>
         <div class="meta"><span>${window.PY.fmtViews(v.views)} 位岛民看过</span><span>${window.PY.fmtDate(v.createdAt)}</span>${v.author?`<span>· ${window.PY.esc(v.author.owner?'站长':(v.author.name||'岛民'))} 发布</span>`:''}</div>
         ${tags ? `<div class="tags">${tags}</div>` : ''}
       </div>`;
