@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260928">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260929">
 </head>
 <body>
 <header class="site-header">
@@ -86,7 +86,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260930"></script>
+<script src="assets/pianyu.js?v=20260931"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -172,10 +172,12 @@
     const byAv = (v.author && !v.author.owner && v.author.avatar)
       ? `<img class="cm-av" src="${PY.esc(v.author.avatar)}" alt="" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:4px" onerror="this.remove()">`
       : '';
+    const WT = { original: '原创', derivative: '二创', remix: '三创及以上', repost: '搬运' };
     document.getElementById('meta').innerHTML =
       `<span>${PY.fmtViews(v.views)} 位岛民看过</span><span>${PY.fmtDate(v.createdAt)}</span>` +
       `<span>由 ${byAv}${PY.esc(by)} 发布</span>` +
-      (v.source === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>');
+      (v.source === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>') +
+      (v.workType ? `<span class="wt-badge wt-${v.workType}">${WT[v.workType] || '原创'}</span>` : '');
     document.getElementById('tags').innerHTML = (v.tags || [])
       .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
       .join(' ');
@@ -329,6 +331,6 @@
   load();
 })();
 </script>
-  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
+  <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
