@@ -1113,3 +1113,59 @@ html[data-theme="dark"] body .editor-toolbar select { background: #252423; color
 html[data-theme="dark"] body .editor-toolbar .tb-sep { background: #3b3a39; }
 html[data-theme="dark"] body .att-item { border-color: #3b3a39; }
 html[data-theme="dark"] body input[type="color"] { border-color: #484644; }
+
+/* ============ 浮动按钮簇（管理员「更改页面布局」按钮容器，仿小蓝页 .fab 外观） ============ */
+/* 小蓝页的 .fab / .float-actions 定义在其 common.css 中；书栈/片屿没有那份 CSS，
+   故在此按需提供，保证独立站点的布局按钮外观与小蓝页完全一致。 */
+.float-actions {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  right: 20px !important;
+  bottom: 20px !important;
+  z-index: 150 !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+}
+.fab {
+  width: 50px; height: 42px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 14px; font-size: 1.25rem; line-height: 1; color: #1c2733;
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  cursor: pointer; padding: 0; box-sizing: border-box;
+  text-decoration: none;
+  transition: background .18s, transform .12s, box-shadow .18s;
+}
+.fab:hover { background: rgba(255, 255, 255, 0.97); transform: translateY(-2px); }
+.fab:active { transform: scale(0.94); }
+.fab svg { width: 22px; height: 22px; display: block; }
+html[data-theme="dark"] .fab {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+html[data-theme="dark"] .fab:hover { background: rgba(255, 255, 255, 0.22); }
+@media (orientation: landscape) {
+  .float-actions {
+    position: fixed !important; right: 20px !important;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 150 !important; flex-direction: row !important;
+  }
+  .float-actions .fab { width: 50px; height: 42px; border-radius: 14px; }
+}
+@media (max-width: 560px) {
+  .fab { width: 46px; height: 40px; border-radius: 12px; }
+  .fab svg { width: 20px; height: 20px; }
+}
+@media (orientation: landscape) and (max-width: 560px) {
+  .float-actions { right: max(12px, env(safe-area-inset-right, 0px)) !important; bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; gap: 8px !important; }
+}
