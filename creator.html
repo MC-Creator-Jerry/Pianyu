@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>屿作台 · 片屿</title>
+<meta name="description" content="片屿屿作台 —— 岛民管理自己作品与足迹的创作者工作台。">
+<script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260926">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img class="logo" src="assets/favicon.svg?v=6" alt="片屿">
+      片屿<span class="sub">PIANYU</span>
+    </a>
+    <div class="spacer"></div>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="map.html">岛图</a>
+      <a href="admin.html">上新</a>
+      <a href="creator.html" class="on">屿作台</a>
+    </nav>
+    <div class="hdr-right" id="hdrRight"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 未登录 -->
+  <section id="gate" class="gate" style="display:none">
+    <div class="ic">🧭</div>
+    <h2>还没有登岛</h2>
+    <p>屿作台是岛民自己的工作室 —— 里面只有你的作品与足迹。用小蓝页账户登录后即可进入。</p>
+    <a class="btn primary" id="gateLogin" href="/api/sso/start?next=%2Fcreator.html">用小蓝页登录</a>
+  </section>
+
+  <!-- 已登录 -->
+  <section id="content" style="display:none">
+    <h1 class="page-title">屿作台</h1>
+    <p class="page-sub" id="welcomeSub">在片屿，管理你放上岛的每一部片子。</p>
+
+    <div class="creator-shell">
+      <!-- 左：竖导航 -->
+      <aside class="creator-side">
+        <div class="cs-ident">
+          <div id="sideAvatar"></div>
+          <div class="cs-name" id="sideName"></div>
+          <div class="cs-sub" id="sideSub"></div>
+        </div>
+        <nav class="cs-nav" id="csNav">
+          <button class="cs-item on" data-view="home"><span class="cs-ic">🏝️</span>工作台</button>
+          <button class="cs-item" data-view="works"><span class="cs-ic">🎬</span>我的作品</button>
+          <button class="cs-item" data-view="trace"><span class="cs-ic">💬</span>我的足迹</button>
+          <button class="cs-item" data-view="plan"><span class="cs-ic">⚡</span>升级与兑换</button>
+          <button class="cs-item" data-view="setting"><span class="cs-ic">⚙️</span>资料设置</button>
+        </nav>
+        <a class="cs-up" href="admin.html"><span class="cs-ic">＋</span>去上新一部</a>
+      </aside>
+
+      <!-- 右：工作区 -->
+      <section class="creator-main">
+        <!-- 工作台 -->
+        <div class="cv" id="v-home">
+          <div class="stat-row">
+            <div class="stat"><div class="v" id="kWorks">0</div><div class="k">我上新的作品</div></div>
+            <div class="stat"><div class="v" id="kViews">0</div><div class="k">被岛民看过</div></div>
+            <div class="stat"><div class="v" id="kComments">0</div><div class="k">收到的屿论</div></div>
+            <div class="stat"><div class="v" id="kDanmaku">0</div><div class="k">收到的定点屿论</div></div>
+          </div>
+
+          <div class="panel">
+            <h2>岛民身份</h2>
+            <div id="homeIdent" class="home-ident"></div>
+          </div>
+
+          <div class="panel">
+            <h2>最近上新</h2>
+            <div id="homeRecent" class="mini-works"></div>
+          </div>
+        </div>
+
+        <!-- 我的作品 -->
+        <div class="cv" id="v-works" style="display:none">
+          <div class="panel">
+            <h2>我上新的作品（<span id="worksCount">0</span>）</h2>
+            <p class="hint">这里只列你自己放上岛的片子。编辑或下架都在「上新」页操作。</p>
+            <div id="worksList" class="work-rows"></div>
+          </div>
+        </div>
+
+        <!-- 我的足迹 -->
+        <div class="cv" id="v-trace" style="display:none">
+          <div class="panel">
+            <h2>我的足迹</h2>
+            <p class="hint">你在别的岛民片子里留下的屿论与定点屿论。</p>
+            <div class="tabs">
+              <button class="tab on" data-t="comments">屿论</button>
+              <button class="tab" data-t="danmaku">定点屿论</button>
+            </div>
+            <div id="traceList" class="act-list"></div>
+          </div>
+        </div>
+
+        <!-- 升级与兑换 -->
+        <div class="cv" id="v-plan" style="display:none">
+          <div class="panel" id="planStatus">
+            <h2>发布功能升级</h2>
+            <div id="planBody"><p class="hint">加载中…</p></div>
+            <div class="redeem-box" id="redeemBox">
+              <label for="redeemInput">已有兑换码？贴到这里即可开通 / 续期</label>
+              <div class="redeem-row">
+                <input id="redeemInput" class="input" type="text" maxlength="20"
+                       placeholder="例如 ABCD-2345" autocomplete="off" spellcheck="false">
+                <button id="btnRedeem" class="btn primary">兑换</button>
+              </div>
+              <div id="redeemMsg" class="dm-hint"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 资料设置 -->
+        <div class="cv" id="v-setting" style="display:none">
+          <div class="panel">
+            <h2>岛民档案</h2>
+            <div class="field">
+              <label for="dn">岛名（显示在屿论与定点屿论上，最长 24 字）</label>
+              <input id="dn" class="input" type="text" maxlength="24" placeholder="例如：海风">
+            </div>
+            <div class="field">
+              <label for="bio">签名（最长 120 字）</label>
+              <textarea id="bio" class="textarea" maxlength="120" placeholder="一句话介绍自己…"></textarea>
+            </div>
+            <div><button id="btnSave" class="btn primary">保存</button> <span id="saveMsg" class="dm-hint"></span></div>
+          </div>
+          <div class="panel">
+            <h2>显示模式</h2>
+            <div class="switch-row">
+              <span class="hint">切换片屿的整体配色。选「跟随系统」时会随你的系统设置自动变化。</span>
+              <div class="seg" id="themeSeg">
+                <button data-t="light">浅色</button>
+                <button data-t="dark">深色</button>
+                <button data-t="auto">跟随系统</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>账户</h2>
+            <div class="switch-row">
+              <div>
+                <div id="accName" style="font-weight:600"></div>
+                <div id="accLogin" class="hint"></div>
+              </div>
+              <button id="btnLogout" class="btn danger">退出登录</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="yr"></span> 片屿 · PIANYU</span>
+    <span class="spacer"></span>
+    <span>身份由小蓝页提供</span>
+  </div>
+</footer>
+
+<script src="assets/pianyu.js?v=20260929"></script>
+<script>
+(async function () {
+  const $ = (id) => document.getElementById(id);
+  $('yr').textContent = new Date().getFullYear();
+  PY.showSsoNotice();
+  await PY.mountHeader();
+
+  const me = await PY.user.load();
+  if (!me) {
+    $('gate').style.display = 'block';
+    return;
+  }
+  $('content').style.display = 'block';
+
+  /* ---------- 视图切换 ---------- */
+  const VIEWS = ['home', 'works', 'trace', 'plan', 'setting'];
+  function show(view) {
+    VIEWS.forEach((v) => { $('v-' + v).style.display = (v === view) ? 'block' : 'none'; });
+    document.querySelectorAll('.cs-item').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+    if (location.hash.slice(1) !== view) history.replaceState(null, '', '#' + view);
+  }
+  document.querySelectorAll('.cs-item').forEach((b) => {
+    b.addEventListener('click', () => show(b.dataset.view));
+  });
+
+  /* ---------- 身份卡 ---------- */
+  const ini = PY.user.initial(me);
+  $('sideAvatar').innerHTML = me.avatar_url
+    ? '<img src="' + PY.esc(me.avatar_url) + '" alt="">'
+    : '<span class="fb">' + PY.esc(ini) + '</span>';
+  $('sideName').innerHTML = PY.esc(me.name || me.login || '岛民') +
+    (me.isAdmin ? '<span class="badge">站长</span>' : '') +
+    (me.promember && me.promember.active ? '<span class="badge promember">⚡升级</span>' : '');
+  $('sideSub').textContent = me.login ? '@' + me.login : '小蓝页账户';
+  $('welcomeSub').textContent = '欢迎回来，' + (me.name || me.login || '岛民') + '。在片屿，管理你放上岛的每一部片子。';
+
+  /* ---------- 数据 ---------- */
+  const [pRes, prRes, vRes] = await Promise.all([
+    PY.api('/api/profile'),
+    PY.api('/api/profile?sub=' + encodeURIComponent(me.sub || '')),
+    PY.api('/api/videos'),
+  ]);
+  const prof = (pRes.data && pRes.data.ok) ? pRes.data : null;
+  const all = (vRes.data && vRes.data.videos) || [];
+
+  // 我上新的作品（按 author.sub 归属）
+  const mine = all.filter((v) => v.author && me.sub && String(v.author.sub) === String(me.sub));
+  // 站长看全部（岛上目前所有片子都是他的）
+  const owned = me.isAdmin ? all : mine;
+
+  const act = (prof && prof.activity) || { comments: [], danmaku: [] };
+
+  // 收到的屿论 / 定点屿论：扫「我的片子」的评论
+  $('kWorks').textContent = owned.length;
+  $('kViews').textContent = PY.fmtViews(owned.reduce((s, v) => s + (Number(v.views) || 0), 0));
+  $('kComments').textContent = (prof && prof.stats && prof.stats.comments) || 0;
+  $('kDanmaku').textContent = (prof && prof.stats && prof.stats.danmaku) || 0;
+
+  // 身份卡（工作台）
+  const planLabel = me.promember && me.promember.active
+    ? '升级-付费成员（有效至 ' + PY.fmtDate(me.promember.until) + '）'
+    : '普通岛民 · 每日可上新 6 部';
+  $('homeIdent').innerHTML =
+    '<div class="hi-row"><span class="hi-k">岛名</span><span class="hi-v">' + PY.esc(me.name || me.login || '岛民') + '</span></div>' +
+    '<div class="hi-row"><span class="hi-k">身份</span><span class="hi-v">' + PY.esc(me.isAdmin ? '站长' : '岛民') + '</span></div>' +
+    '<div class="hi-row"><span class="hi-k">权益</span><span class="hi-v">' + PY.esc(planLabel) + '</span></div>' +
+    '<div class="hi-row"><span class="hi-k">签名</span><span class="hi-v">' + PY.esc(me.bio || '还没写签名') + '</span></div>';
+
+  /* ---------- 我的作品 ---------- */
+  function renderWorks() {
+    $('worksCount').textContent = owned.length;
+    const box = $('worksList');
+    box.innerHTML = '';
+    if (!owned.length) {
+      box.innerHTML = '<p class="hint">还没有作品 —— 去 <a href="admin.html">上新</a> 放上第一部吧。</p>';
+      return;
+    }
+    owned.forEach((v) => {
+      const row = document.createElement('div');
+      row.className = 'work-row';
+      const cover = v.cover
+        ? '<img src="' + PY.esc(v.cover) + '" alt="" loading="lazy">'
+        : '<span class="ph">▶</span>';
+      row.innerHTML =
+        '<div class="wr-thumb">' + cover + '</div>' +
+        '<div class="wr-body">' +
+          '<div class="wr-title">' + PY.esc(v.title) + '</div>' +
+          '<div class="wr-meta">' + PY.fmtViews(v.views) + ' 位岛民看过 · ' + PY.fmtDate(v.createdAt) +
+            (v.duration ? ' · ' + PY.esc(v.duration) : '') + '</div>' +
+        '</div>' +
+        '<a class="btn sm" href="watch.html?id=' + encodeURIComponent(v.id) + '">看</a>' +
+        '<a class="btn sm" href="admin.html">管理</a>';
+      box.appendChild(row);
+    });
+  }
+  renderWorks();
+
+  // 工作台「最近上新」
+  const recent = owned.slice(0, 4);
+  $('homeRecent').innerHTML = recent.length
+    ? recent.map((v) =>
+        '<a class="mini" href="watch.html?id=' + encodeURIComponent(v.id) + '">' +
+        '<div class="mini-th">' + (v.cover
+          ? '<img src="' + PY.esc(v.cover) + '" alt="" loading="lazy">'
+          : '<span class="ph">▶</span>') + '</div>' +
+        '<div class="mini-t">' + PY.esc(v.title) + '</div>' +
+        '<div class="mini-m">' + PY.fmtViews(v.views) + ' 看过</div></a>').join('')
+    : '<p class="hint">还没有作品 —— 去 <a href="admin.html">上新</a> 放上第一部吧。</p>';
+
+  /* ---------- 我的足迹 ---------- */
+  let traceTab = 'comments';
+  function renderTrace() {
+    const list = act[traceTab] || [];
+    const box = $('traceList');
+    box.innerHTML = '';
+    if (!list.length) {
+      box.innerHTML = '<p class="dm-hint">这里还空着 —— 去 <a href="index.html">首页</a> 找部片子说两句吧。</p>';
+      return;
+    }
+    list.forEach((it) => {
+      const el = document.createElement('div');
+      el.className = 'act';
+      el.innerHTML =
+        '<div class="top"><a class="vd" href="watch.html?id=' + encodeURIComponent(it.videoId) + '">' + PY.esc(it.videoTitle) + '</a>' +
+        '<span class="when">' + PY.fmtDate(it.createdAt) + '</span></div>' +
+        '<div class="tx">' + PY.esc(it.text) + '</div>' +
+        (traceTab === 'danmaku' && it.time != null ? '<div class="at">钉在 ' + PY.fmtTime(it.time) + '</div>' : '');
+      box.appendChild(el);
+    });
+  }
+  document.querySelectorAll('#v-trace .tab').forEach((b) => {
+    b.addEventListener('click', () => {
+      traceTab = b.dataset.t;
+      document.querySelectorAll('#v-trace .tab').forEach((x) => x.classList.toggle('on', x === b));
+      renderTrace();
+    });
+  });
+  renderTrace();
+
+  /* ---------- 升级与兑换 ---------- */
+  function renderPlan(pm) {
+    const box = $('planBody');
+    if (pm && pm.active) {
+      const limit = 6 + (Number(pm.bonus) || 10);
+      box.innerHTML =
+        '<div class="promember-badge">⚡ 升级-付费成员</div>' +
+        '<p class="hint">每日发布上限：<b>' + limit + '</b> / 天</p>' +
+        '<p class="hint">有效期至：<b>' + PY.fmtDate(pm.until) + '</b>（续费后会收到新码，再兑一次即可顺延）</p>';
+    } else {
+      box.innerHTML =
+        '<p class="hint">你目前是普通岛民：每日发布上限 6 / 天。升级后每日上限 +10，并解锁高级版功能。</p>' +
+        '<p class="hint">发电付款后，爱发电会<b>自动发给你一条兑换码</b>，贴进下面输入框即可开通。</p>' +
+        PY.upgradeCard(me && me.sub);
+    }
+  }
+  renderPlan(me.promember);
+
+  async function doRedeem() {
+    const input = $('redeemInput');
+    const msg = $('redeemMsg');
+    const code = (input && input.value ? input.value : '').trim();
+    if (!code) { msg.textContent = '请输入兑换码'; return; }
+    msg.textContent = '兑换中…';
+    const { res, data } = await PY.api('/api/redeem', {
+      method: 'POST',
+      body: JSON.stringify({ code: code }),
+    });
+    if (res.ok && data && data.ok) {
+      msg.textContent = '开通成功 ✓ 有效期至 ' + PY.fmtDate(data.promember.until);
+      input.value = '';
+      const fresh = await PY.user.load(true);
+      renderPlan(fresh && fresh.promember);
+      if (fresh) {
+        $('sideName').innerHTML = PY.esc(fresh.name || fresh.login || '岛民') +
+          (fresh.isAdmin ? '<span class="badge">站长</span>' : '') +
+          (fresh.promember && fresh.promember.active ? '<span class="badge promember">⚡升级</span>' : '');
+      }
+    } else {
+      msg.textContent = (data && data.message) || ('兑换失败：' + ((data && data.error) || res.status));
+    }
+  }
+  $('btnRedeem').onclick = doRedeem;
+  $('redeemInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doRedeem(); });
+
+  /* ---------- 资料设置 ---------- */
+  const seg = $('themeSeg');
+  function paintSeg() {
+    const cur = PY.theme.pref();
+    document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.t === cur));
+  }
+  document.querySelectorAll('#themeSeg button').forEach((b) => {
+    b.addEventListener('click', () => {
+      try { localStorage.setItem(PY.theme.KEY, b.dataset.t); } catch (e) {}
+      PY.theme.apply(PY.theme.resolve());
+      paintSeg();
+    });
+  });
+  paintSeg();
+
+  const sRes = await PY.api('/api/settings');
+  if (sRes.res.ok && sRes.data && sRes.data.ok) {
+    const u = sRes.data.user || {};
+    $('dn').value = (sRes.data.settings && sRes.data.settings.display_name) || u.name || '';
+    $('bio').value = (sRes.data.settings && sRes.data.settings.bio) || '';
+    $('accName').textContent = u.name || u.login || '岛民';
+    $('accLogin').textContent = (u.login ? '@' + u.login : '小蓝页账户') + (u.isAdmin ? ' · 站长' : '');
+  }
+
+  $('btnSave').onclick = async () => {
+    const msg = $('saveMsg');
+    msg.textContent = '保存中…';
+    const { res, data } = await PY.api('/api/settings', {
+      method: 'POST',
+      body: JSON.stringify({ display_name: $('dn').value, bio: $('bio').value }),
+    });
+    if (res.ok && data && data.ok) {
+      msg.textContent = '已保存 ✓';
+      if (data.user) {
+        PY.user._cached = data.user;
+        $('accName').textContent = data.user.name || '';
+      }
+      setTimeout(() => { msg.textContent = ''; }, 2500);
+    } else {
+      msg.textContent = '保存失败：' + ((data && data.error) || res.status);
+    }
+  };
+  $('btnLogout').onclick = () => PY.user.logout();
+
+  /* ---------- 初始视图（支持 #hash 深链） ---------- */
+  const want = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
+  show(want);
+})();
+</script>
+  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
+</body>
+</html>
