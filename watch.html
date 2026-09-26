@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260929">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260930">
 </head>
 <body>
 <header class="site-header">
@@ -27,6 +27,20 @@
 </header>
 
 <main class="wrap" id="main">
+
+  <!-- 管理员举报审核条（仅带 ?report=<id> 且管理员/站长登录时显示） -->
+  <div class="report-review" id="reportReview" style="display:none">
+    <div class="rr-card">
+      <div class="rr-head">🛡️ 举报审核<span class="rr-close" id="rrClose" title="返回面板">×</span></div>
+      <div class="rr-body" id="rrBody"></div>
+      <div class="rr-actions">
+        <button class="btn sm danger" id="rrPass" type="button">举报通过（删除内容）</button>
+        <button class="btn sm" id="rrReject" type="button">举报不通过（保留）</button>
+        <button class="btn sm ghost" id="rrBack" type="button">返回面板</button>
+      </div>
+    </div>
+  </div>
+
   <div class="player-wrap">
     <div id="videoHost"></div>
     <div id="dmLayer" class="dm-layer"></div>
@@ -86,7 +100,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260932"></script>
+<script src="assets/pianyu.js?v=20260934"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -96,6 +110,7 @@
 
   PY.showSsoNotice();
   const hdrReady = PY.mountHeader();
+  initReportReview();
 
   if (!id) {
     document.querySelector('.player-wrap').style.display = 'none';
@@ -244,6 +259,7 @@
     list.slice().reverse().forEach((c) => {
       const el = document.createElement('div');
       el.className = 'cm-item';
+      el.id = 'cm-' + c.id;
       const av = c.avatar
         ? `<img class="cm-av" src="${PY.esc(c.avatar)}" alt="" loading="lazy" onerror="this.remove()">`
         : '';
@@ -327,6 +343,78 @@
       alert('提交失败：' + ((data && data.error) || res.status));
     }
   };
+
+  /* ---------------- 管理员举报审核（来自 ?report=<id>） ---------------- */
+  function backToPanel() {
+    let url = 'manage.html';
+    try {
+      const ret = sessionStorage.getItem('pianyu_report_return');
+      if (ret) url = ret;
+    } catch (e) {}
+    try { sessionStorage.removeItem('pianyu_report_return'); } catch (e) {}
+    location.href = url;
+  }
+
+  async function initReportReview() {
+    const rid = PY.qs('report');
+    if (!rid) return;
+    const review = document.getElementById('reportReview');
+    const body = document.getElementById('rrBody');
+    if (!review || !body) return;
+
+    const isAdm = await PY.isAdmin();
+    if (!isAdm) {
+      review.style.display = 'block';
+      body.innerHTML = '<p class="hint">只有管理员 / 站长才能审核举报。请先以管理员身份登录，或返回面板。</p>';
+      return;
+    }
+    const { res, data } = await PY.api('/api/admin/reports');
+    if (!res.ok || !data || !data.ok) {
+      review.style.display = 'block';
+      body.innerHTML = '<p class="hint">读取举报失败。</p>';
+      return;
+    }
+    const r = (data.reports || []).find((x) => x.id === rid);
+    if (!r) {
+      review.style.display = 'block';
+      body.innerHTML = '<p class="hint">该举报已处理或不存在。</p>';
+      return;
+    }
+    const RT = { spam: '垃圾广告/刷屏', abuse: '不当或有害内容', copyright: '侵权/未授权', other: '其他' };
+    const KT = { video: '视频', comment: '屿论', danmaku: '定点屿论' };
+    const reason = RT[r.reason] || '其他';
+    const kind = KT[r.kind] || r.kind;
+    body.innerHTML =
+      '<div class="rr-line"><b>类型：</b>' + PY.esc(kind) + '　<b>理由：</b>' + PY.esc(reason) + '</div>' +
+      '<div class="rr-line"><b>被举报：</b>' + PY.esc(r.videoTitle || r.videoId) +
+        (r.kind !== 'video' ? '（目标 ' + PY.esc(r.targetId) + '）' : '') + '</div>' +
+      '<div class="rr-line"><b>举报人：</b>' + PY.esc(r.name) + (r.login ? ' @' + PY.esc(r.login) : '') + '</div>' +
+      (r.text ? '<div class="rr-line rr-text">补充说明：' + PY.esc(r.text) + '</div>' : '');
+
+    review.style.display = 'block';
+
+    const tid = PY.qs('tid');
+    if (tid) {
+      const el = document.getElementById('cm-' + tid);
+      if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('cm-flagged'); }
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    let busy = false;
+    async function decide(action) {
+      if (busy) return; busy = true;
+      if (action === 'delete' && !confirm('举报通过＝删除被举报的内容（视频整体删除 / 屿论·定点屿论仅删该条），确定？')) { busy = false; return; }
+      const { res: r2, data: d2 } = await PY.api('/api/admin/reports', { method: 'POST', body: JSON.stringify({ id: rid, action }) });
+      busy = false;
+      if (r2.ok) backToPanel();
+      else alert('操作失败：' + ((d2 && d2.error) || r2.status));
+    }
+    document.getElementById('rrPass').onclick = () => decide('delete');
+    document.getElementById('rrReject').onclick = () => decide('resolve');
+    document.getElementById('rrBack').onclick = backToPanel;
+    document.getElementById('rrClose').onclick = backToPanel;
+  }
 
   load();
 })();
