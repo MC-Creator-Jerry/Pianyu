@@ -3,6 +3,9 @@
 //  Shared helpers (no framework).
 // ============================================================
 
+// 管理员身份判定统一放在服务端 /api/admin/me（站长 SSO isAdmin 或 管理员账户 pianyu_sid），
+// 前端只读 data.isAdmin，不在本地硬编码站主用户名。
+
 window.PY = {
   esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
@@ -78,9 +81,11 @@ window.PY = {
     return a;
   },
 
+  // 是否具备管理能力（站长 SSO 或 管理员账户）。服务端已合并两种身份，
+  // 前端一律用这个判断，不再区分 isAdmin/isOwner。
   async isAdmin() {
     const { data } = await this.api('/api/admin/me');
-    return !!(data && data.loggedIn);
+    return !!(data && data.isAdmin);
   },
 
   // 举报处理面板渲染（站长「上新」页 + 管理员控制台共用）
