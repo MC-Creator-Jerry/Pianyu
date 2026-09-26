@@ -110,6 +110,7 @@ window.PY = {
           '<span class="r-by">举报人：' + PY.esc(r.name) + (r.login ? ' @' + PY.esc(r.login) : '') + '</span>' + target + '</div>' +
         (r.text ? '<div class="r-text">' + PY.esc(r.text) + '</div>' : '') +
         '<div class="r-actions">' +
+          '<button class="btn sm" data-act="jump">跳转查看</button>' +
           '<button class="btn sm" data-act="resolve">已处理</button>' +
           '<button class="btn sm danger" data-act="delete">删除内容</button>' +
         '</div></div>';
@@ -118,12 +119,42 @@ window.PY = {
       b.onclick = async () => {
         const id = b.closest('.report-item').dataset.id;
         const act = b.dataset.act;
+        if (act === 'jump') {
+          const r = rs.find((x) => x.id === id);
+          if (r) PY.gotoReportContent(r);
+          return;
+        }
         if (act === 'delete' && !confirm('确定删除被举报的内容？视频将整体删除，屿论/定点屿论仅删该条。')) return;
         const { res: r2, data: d2 } = await PY.api('/api/admin/reports', { method: 'POST', body: JSON.stringify({ id, action: act }) });
         if (r2.ok) PY.renderReports(box, cnt);
         else alert('操作失败：' + ((d2 && d2.error) || r2.status));
       };
     });
+    // 从被举报内容页处理完回到面板时，还原到跳转前的滚动位置
+    PY.restoreReportScroll();
+  },
+
+  // 从面板跳到被举报的内容页：记下返回页 + 当前滚动位置，带上 report / tid 参数
+  gotoReportContent(r) {
+    try {
+      sessionStorage.setItem('pianyu_report_scroll', String(window.scrollY));
+      sessionStorage.setItem('pianyu_report_return', location.pathname);
+      sessionStorage.setItem('pianyu_report_id', r.id);
+    } catch (e) {}
+    let url = 'watch.html?id=' + encodeURIComponent(r.videoId) + '&report=' + encodeURIComponent(r.id);
+    if (r.kind !== 'video' && r.targetId) url += '&tid=' + encodeURIComponent(r.targetId);
+    location.href = url;
+  },
+
+  // 返回面板后，把滚动位置还原到跳转前的位置（只生效一次）
+  restoreReportScroll() {
+    try {
+      const y = sessionStorage.getItem('pianyu_report_scroll');
+      if (y != null) {
+        window.scrollTo(0, Number(y) || 0);
+        sessionStorage.removeItem('pianyu_report_scroll');
+      }
+    } catch (e) {}
   },
 };
 
