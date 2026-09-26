@@ -8,6 +8,7 @@
 import { listVideos, saveVideos, newId, normalizeTags } from '../_lib/store.js';
 import { json } from '../_lib/auth.js';
 import { getActor } from '../_lib/actor.js';
+import { getProMember } from '../_lib/pycode.js';
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
@@ -49,19 +50,11 @@ export async function onRequestPost({ request, env }) {
 
   // 每用户每日上新上限（站长城除外）；爱发电「发布功能升级」用户额外 +10
   const BASE_LIMIT = 6;
-  const VIP_BONUS = 10;
   const who = actor.sub || actor.login || 'unknown';
   let limit = BASE_LIMIT;
   if (!actor.isOwner) {
-    const vipRaw = await env.PIANYU_KV.get('vip:' + who);
-    if (vipRaw) {
-      try {
-        const v = JSON.parse(vipRaw);
-        if (v && v.until && v.until > Date.now()) limit = BASE_LIMIT + (Number(v.bonus) || VIP_BONUS);
-      } catch (e) {
-        /* 损坏数据忽略 */
-      }
-    }
+    const pm = await getProMember(env.PIANYU_KV, who);
+    if (pm) limit = BASE_LIMIT + (Number(pm.bonus) || PRO_MEMBER_BONUS);
   }
   if (!actor.isOwner) {
     const day = new Date().toISOString().slice(0, 10); // UTC 日期
