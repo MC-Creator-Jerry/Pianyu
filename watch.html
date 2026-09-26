@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260927">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260928">
 </head>
 <body>
 <header class="site-header">
@@ -41,7 +41,12 @@
   <h1 id="title" class="watch-title"></h1>
   <div id="meta" class="watch-meta"></div>
   <div id="tags" class="tags"></div>
-  <div id="desc" class="watch-desc"></div>
+    <div id="desc" class="watch-desc"></div>
+
+    <div class="watch-actions" id="watchActions">
+      <button id="likeBtn" class="act-btn" type="button"><span class="ic">👍</span> <span id="likeCount">0</span></button>
+      <button id="reportBtn" class="act-btn ghost" type="button">🚩 举报</button>
+    </div>
 
   <section class="yulun">
     <h2>屿论 <span class="count" id="cmCount"></span></h2>
@@ -58,6 +63,24 @@
     <div id="cmList" class="cm-list"></div>
   </section>
 </main>
+
+<div class="modal" id="reportModal" style="display:none">
+  <div class="modal-card">
+    <h3 id="reportTitle">举报内容</h3>
+    <p class="hint" id="reportHint">我们会尽快核实处理。举报需登录，匿名无法提交。</p>
+    <div class="report-reasons">
+      <label><input type="radio" name="rr" value="spam" checked> 垃圾广告 / 刷屏</label>
+      <label><input type="radio" name="rr" value="abuse"> 不当或有害内容</label>
+      <label><input type="radio" name="rr" value="copyright"> 侵权 / 未授权</label>
+      <label><input type="radio" name="rr" value="other"> 其他</label>
+    </div>
+    <textarea id="reportText" class="textarea" maxlength="300" placeholder="补充说明（可选，最多 300 字）"></textarea>
+    <div class="modal-actions">
+      <button id="reportCancel" class="btn" type="button">取消</button>
+      <button id="reportSubmit" class="btn primary" type="button">提交举报</button>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
@@ -160,6 +183,7 @@
 
     loadDanmaku();
     loadComments();
+    loadLikes();
   }
 
   async function loadDanmaku() {
@@ -224,7 +248,8 @@
       const badge = c.isAdmin ? '<span class="badge">站长</span>' : '';
       el.innerHTML =
         `<div class="cm-head">${av}<span class="who">${PY.esc(c.name)}</span>${badge}<span class="when">${PY.fmtDate(c.createdAt)}</span></div>` +
-        `<div class="cm-text">${PY.esc(c.text)}</div>`;
+        `<div class="cm-text">${PY.esc(c.text)}</div>` +
+        `<a class="cm-report" data-id="${PY.esc(c.id)}">举报</a>`;
       box.appendChild(el);
     });
   }
@@ -242,6 +267,62 @@
       loadComments();
     } else {
       document.getElementById('cmMsg').textContent = '发送失败：' + ((data && data.error) || res.status);
+    }
+  };
+
+  /* ---------------- 点赞 (likes) ---------------- */
+  async function loadLikes() {
+    const { data } = await PY.api('/api/likes?videoId=' + encodeURIComponent(id));
+    if (data && data.ok) {
+      document.getElementById('likeCount').textContent = data.count;
+      const btn = document.getElementById('likeBtn');
+      if (data.liked) btn.classList.add('on');
+      else btn.classList.remove('on');
+    }
+  }
+  document.getElementById('likeBtn').onclick = async () => {
+    if (!me) { location.href = '/api/sso/start?next=' + encodeURIComponent(location.pathname + location.search); return; }
+    const { res, data } = await PY.api('/api/likes', { method: 'POST', body: JSON.stringify({ videoId: id }) });
+    if (res.ok && data.ok) {
+      document.getElementById('likeCount').textContent = data.count;
+      document.getElementById('likeBtn').classList.toggle('on', data.liked);
+    } else {
+      alert('操作失败：' + ((data && data.error) || res.status));
+    }
+  };
+
+  /* ---------------- 举报 (report) ---------------- */
+  let reportState = { kind: 'video', targetId: '' };
+  function openReport(kind, targetId) {
+    if (!me) { location.href = '/api/sso/start?next=' + encodeURIComponent(location.pathname + location.search); return; }
+    reportState = { kind, targetId };
+    document.getElementById('reportTitle').textContent =
+      kind === 'video' ? '举报这部片子' : (kind === 'comment' ? '举报这条屿论' : '举报这条定点屿论');
+    document.getElementById('reportText').value = '';
+    document.getElementById('reportModal').style.display = 'flex';
+  }
+  function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+  document.getElementById('reportBtn').onclick = () => openReport('video', '');
+  document.getElementById('reportCancel').onclick = closeReportModal;
+  document.getElementById('reportModal').addEventListener('click', (e) => {
+    if (e.target.id === 'reportModal') closeReportModal();
+  });
+  document.getElementById('cmList').addEventListener('click', (e) => {
+    const t = e.target.closest('.cm-report');
+    if (t) openReport('comment', t.dataset.id);
+  });
+  document.getElementById('reportSubmit').onclick = async () => {
+    const reason = (document.querySelector('input[name="rr"]:checked') || {}).value || 'other';
+    const text = document.getElementById('reportText').value.trim();
+    const { res, data } = await PY.api('/api/report', {
+      method: 'POST',
+      body: JSON.stringify({ videoId: id, kind: reportState.kind, targetId: reportState.targetId, reason, text }),
+    });
+    if (res.ok && data.ok) {
+      closeReportModal();
+      alert('举报已提交，感谢你的反馈。');
+    } else {
+      alert('提交失败：' + ((data && data.error) || res.status));
     }
   };
 
