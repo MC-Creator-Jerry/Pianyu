@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>屿作台 · 片屿</title>
-<meta name="description" content="片屿屿作台 —— 岛民管理自己作品与足迹的创作者工作台。">
+<title>创作岛 · 片屿</title>
+<meta name="description" content="片屿创作岛 —— 岛民管理自己作品与足迹的创作者工作台。">
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260926">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260927">
 </head>
 <body>
 <header class="site-header">
@@ -21,7 +21,7 @@
       <a href="index.html">首页</a>
       <a href="map.html">岛图</a>
       <a href="admin.html">上新</a>
-      <a href="creator.html" class="on">屿作台</a>
+      <a href="creator.html" class="on">创作岛</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -32,13 +32,13 @@
   <section id="gate" class="gate" style="display:none">
     <div class="ic">🧭</div>
     <h2>还没有登岛</h2>
-    <p>屿作台是岛民自己的工作室 —— 里面只有你的作品与足迹。用小蓝页账户登录后即可进入。</p>
+    <p>创作岛是岛民自己的工作室 —— 里面只有你的作品与足迹。用小蓝页账户登录后即可进入。</p>
     <a class="btn primary" id="gateLogin" href="/api/sso/start?next=%2Fcreator.html">用小蓝页登录</a>
   </section>
 
   <!-- 已登录 -->
   <section id="content" style="display:none">
-    <h1 class="page-title">屿作台</h1>
+    <h1 class="page-title">创作岛</h1>
     <p class="page-sub" id="welcomeSub">在片屿，管理你放上岛的每一部片子。</p>
 
     <div class="creator-shell">
@@ -169,7 +169,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260929"></script>
+<script src="assets/pianyu.js?v=20260930"></script>
 <script>
 (async function () {
   const $ = (id) => document.getElementById(id);
