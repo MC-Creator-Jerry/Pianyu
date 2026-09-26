@@ -85,3 +85,80 @@ export async function addDanmaku(env, videoId, d) {
   await env.PIANYU_KV.put(DANMAKU_PREFIX + videoId, JSON.stringify(trimmed));
   return trimmed;
 }
+
+/* ---------------- 点赞 (likes) ---------------- */
+
+const LIKES_PREFIX = 'likes:';
+
+export async function getLikes(env, videoId) {
+  const raw = await env.PIANYU_KV.get(LIKES_PREFIX + videoId, { type: 'json' });
+  const obj = (raw && Array.isArray(raw.users)) ? raw : { users: [] };
+  return obj;
+}
+
+// 切换当前用户的点赞态；返回最新 { liked, count }
+export async function toggleLike(env, videoId, sub) {
+  const obj = await getLikes(env, videoId);
+  const i = obj.users.indexOf(sub);
+  let liked;
+  if (i >= 0) { obj.users.splice(i, 1); liked = false; }
+  else { obj.users.push(sub); liked = true; }
+  await env.PIANYU_KV.put(LIKES_PREFIX + videoId, JSON.stringify(obj));
+  return { liked, count: obj.users.length };
+}
+
+/* ---------------- 举报 (reports) ---------------- */
+
+const REPORTS_INDEX = 'reports:open';
+const reportKey = (id) => 'report:' + id;
+
+export async function addReport(env, report) {
+  await env.PIANYU_KV.put(reportKey(report.id), JSON.stringify(report));
+  const idx = await env.PIANYU_KV.get(REPORTS_INDEX, { type: 'json' });
+  const list = Array.isArray(idx) ? idx : [];
+  list.push(report.id);
+  await env.PIANYU_KV.put(REPORTS_INDEX, JSON.stringify(list));
+  return report;
+}
+
+export async function listOpenReports(env) {
+  const idx = await env.PIANYU_KV.get(REPORTS_INDEX, { type: 'json' });
+  const ids = Array.isArray(idx) ? idx : [];
+  const out = [];
+  for (const id of ids) {
+    const r = await env.PIANYU_KV.get(reportKey(id), { type: 'json' });
+    if (r) out.push(r);
+  }
+  return out;
+}
+
+// 标记举报为已处理：保留明细（status=resolved），仅从待处理索引移除
+export async function resolveReport(env, id) {
+  const r = await env.PIANYU_KV.get(reportKey(id), { type: 'json' });
+  if (r) {
+    r.status = 'resolved';
+    await env.PIANYU_KV.put(reportKey(id), JSON.stringify(r));
+  }
+  const idx = await env.PIANYU_KV.get(REPORTS_INDEX, { type: 'json' });
+  const list = Array.isArray(idx) ? idx.filter((x) => x !== id) : [];
+  await env.PIANYU_KV.put(REPORTS_INDEX, JSON.stringify(list));
+}
+
+export async function getReport(env, id) {
+  return await env.PIANYU_KV.get(reportKey(id), { type: 'json' });
+}
+
+// 供管理员删除被举报内容
+export async function removeComment(env, videoId, targetId) {
+  const list = await listComments(env, videoId);
+  const next = list.filter((c) => c.id !== targetId);
+  await env.PIANYU_KV.put(COMMENTS_PREFIX + videoId, JSON.stringify(next));
+  return next.length;
+}
+
+export async function removeDanmaku(env, videoId, targetId) {
+  const list = await listDanmaku(env, videoId);
+  const next = list.filter((d) => d.id !== targetId);
+  await env.PIANYU_KV.put(DANMAKU_PREFIX + videoId, JSON.stringify(next));
+  return next.length;
+}
