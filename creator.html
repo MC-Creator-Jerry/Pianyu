@@ -7,7 +7,7 @@
 <meta name="description" content="片屿创作岛 —— 岛民管理自己作品与足迹的创作者工作台。">
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260927">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260928">
 </head>
 <body>
 <header class="site-header">
@@ -68,6 +68,7 @@
             <div class="stat"><div class="v" id="kViews">0</div><div class="k">被岛民看过</div></div>
             <div class="stat"><div class="v" id="kComments">0</div><div class="k">收到的屿论</div></div>
             <div class="stat"><div class="v" id="kDanmaku">0</div><div class="k">收到的定点屿论</div></div>
+            <div class="stat"><div class="v" id="kLikes">0</div><div class="k">收到的赞</div></div>
           </div>
 
           <div class="panel">
@@ -227,6 +228,13 @@
   $('kViews').textContent = PY.fmtViews(owned.reduce((s, v) => s + (Number(v.views) || 0), 0));
   $('kComments').textContent = (prof && prof.stats && prof.stats.comments) || 0;
   $('kDanmaku').textContent = (prof && prof.stats && prof.stats.danmaku) || 0;
+
+  // 收到的赞：聚合我的视频的 like 数（站长聚合全站）
+  try {
+    const likeRes = await Promise.all(owned.map((v) => PY.api('/api/likes?videoId=' + encodeURIComponent(v.id))));
+    const totalLikes = likeRes.reduce((s, r) => s + ((r.data && r.data.ok && Number(r.data.count)) || 0), 0);
+    $('kLikes').textContent = totalLikes;
+  } catch (e) { /* 点赞统计失败不影响其余展示 */ }
 
   // 身份卡（工作台）
   const planLabel = me.promember && me.promember.active
