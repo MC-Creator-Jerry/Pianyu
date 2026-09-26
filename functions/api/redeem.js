@@ -39,12 +39,12 @@ export async function onRequestPost(context) {
   return json({
     ok: true,
     code: formatCode(body.code),
-    vip: {
+    promember: {
       active: true,
-      until: r.vip.until,
-      bonus: r.vip.bonus,
-      plan: r.vip.plan,
-      order: r.vip.order,
+      until: r.promember.until,
+      bonus: r.promember.bonus,
+      plan: r.promember.plan,
+      order: r.promember.order,
     },
   });
 }
