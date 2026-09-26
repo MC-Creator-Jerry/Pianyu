@@ -349,7 +349,7 @@ PY.user = {
       const a = document.createElement('a');
       a.setAttribute('role', 'menuitem');
       a.href = 'settings.html#adminPanel';
-      a.textContent = '管理员 · 举报处理';
+      a.textContent = '管理员面板';
       a.style.color = 'var(--accent)';
       a.style.fontWeight = '600';
       setItem.insertAdjacentElement('afterend', a);
