@@ -92,6 +92,14 @@
       </div>
     </div>
   </section>
+
+  <section id="adminSection" style="display:none">
+    <div class="panel" id="adminPanel">
+      <h2>管理员 · 举报处理 <span id="reportCount" style="font-size:13px;color:var(--accent);font-weight:600;margin-left:6px"></span></h2>
+      <p class="hint">仅管理员可见。点「跳转查看」前往被举报内容核对，处理完会自动回到这里并定位到原位置。</p>
+      <div id="reportList" class="report-list"></div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -102,7 +110,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260934"></script>
+<script src="assets/pianyu.js?v=20260935"></script>
 <script>
 (async function () {
   document.getElementById('yr').textContent = new Date().getFullYear();
@@ -177,6 +185,19 @@
     redeemInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') doRedeem();
     });
+  }
+
+  /* ---------- 管理员面板（独立于 SSO 登录门，仅管理员可见） ---------- */
+  if (await PY.isAdmin()) {
+    const sec = document.getElementById('adminSection');
+    if (sec) sec.style.display = 'block';
+    if (location.hash.indexOf('adminPanel') >= 0) {
+      setTimeout(() => {
+        const p = document.getElementById('adminPanel');
+        if (p) p.scrollIntoView({ behavior: 'smooth' });
+      }, 80);
+    }
+    PY.renderReports(document.getElementById('reportList'), document.getElementById('reportCount'));
   }
 
   /* ---------- 档案 ---------- */
