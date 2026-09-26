@@ -6,7 +6,7 @@
 <title>设置 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260926">
 </head>
 <body>
 <header class="site-header">
@@ -20,6 +20,7 @@
       <a href="index.html">首页</a>
       <a href="map.html">岛图</a>
       <a href="admin.html">上新</a>
+      <a href="creator.html">屿作台</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -76,9 +77,9 @@
       </p>
     </div>
 
-    <div class="panel" id="vipPanel">
+    <div class="panel" id="promemberPanel">
       <h2>发布功能升级</h2>
-      <div id="vipBody"><p class="hint">加载中…</p></div>
+      <div id="promemberBody"><p class="hint">加载中…</p></div>
 
       <div class="redeem-box" id="redeemBox" style="display:none">
         <label for="redeemInput">已有兑换码？贴到这里即可开通 / 续期</label>
@@ -101,7 +102,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js"></script>
+<script src="assets/pianyu.js?v=20260929"></script>
 <script>
 (async function () {
   document.getElementById('yr').textContent = new Date().getFullYear();
@@ -126,19 +127,22 @@
   paintSeg();
 
   /* ---------- 升级状态 ---------- */
-  function renderVip(me) {
-    const box = document.getElementById('vipBody');
+  function renderProMember(me) {
+    const box = document.getElementById('promemberBody');
     if (!box) return;
-    const vip = me && me.vip;
-    if (vip && vip.active) {
-      const limit = 6 + (Number(vip.bonus) || 10);
+    const promember = me && me.promember;
+    if (promember && promember.active) {
+      const limit = 6 + (Number(promember.bonus) || 10);
+      const PLAN_NAMES = { bundle: '全站捆绑套餐（发布功能升级）', pianyu: '片屿·发布功能升级', 'afdian-code': '片屿兑换码' };
+      const planName = PLAN_NAMES[promember.plan] || promember.plan || '未知套餐';
       box.innerHTML =
-        '<div class="vip-badge">⚡ 已升级 VIP</div>' +
+        '<div class="promember-badge">⚡ 升级-付费成员</div>' +
+        '<p class="hint">已开通套餐：<b>' + planName + '</b></p>' +
         '<p class="hint">每日发布上限：<b>' + limit + '</b> / 天</p>' +
-        '<p class="hint">有效期至：<b>' + PY.fmtDate(vip.until) + '</b>（续费后会收到新码，再兑一次即可顺延）</p>';
+        '<p class="hint">有效期至：<b>' + PY.fmtDate(promember.until) + '</b>（续费后会收到新码，再兑一次即可顺延）</p>';
     } else {
       box.innerHTML =
-        '<p class="hint">你目前是普通岛民：每日发布上限 6 / 天。发电开通「发布功能升级」后，每日上限 +10，并解锁高级版功能。</p>' +
+        '<p class="hint">你目前是普通-免费成员：每日发布上限 6 / 天。发电开通「发布功能升级」后，每日上限 +10，并解锁高级版功能。</p>' +
         '<p class="hint">发电付款后，爱发电会<b>自动发给你一条兑换码</b>，回到本页面贴进下方输入框即可开通。</p>' +
         PY.upgradeCard(me && me.sub);
     }
@@ -158,10 +162,10 @@
     });
 
     if (res.ok && data && data.ok) {
-      msg.textContent = '开通成功 ✓ 有效期至 ' + PY.fmtDate(data.vip.until);
+      msg.textContent = '开通成功 ✓ 有效期至 ' + PY.fmtDate(data.promember.until);
       input.value = '';
       const fresh = await PY.user.load(true);
-      renderVip(fresh);
+      renderProMember(fresh);
     } else {
       msg.textContent = (data && data.message) || ('兑换失败：' + ((data && data.error) || res.status));
     }
@@ -184,7 +188,7 @@
   document.getElementById('content').style.display = 'block';
   const rbox = document.getElementById('redeemBox');
   if (rbox) rbox.style.display = 'block';
-  renderVip(me);
+  renderProMember(me);
 
   const { res, data } = await PY.api('/api/settings');
   if (res.ok && data && data.ok) {
@@ -222,5 +226,6 @@
   document.getElementById('btnLogout').onclick = () => PY.user.logout();
 })();
 </script>
+  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
 </body>
 </html>
