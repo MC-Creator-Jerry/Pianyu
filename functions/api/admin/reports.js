@@ -8,17 +8,28 @@
 
 import {
   listOpenReports, resolveReport, removeComment, removeDanmaku, listVideos, saveVideos,
+  getSession as getAdminSession,
 } from '../../_lib/store.js';
-import { json } from '../../_lib/auth.js';
+import { json, parseCookie, COOKIE as ADMIN_COOKIE } from '../../_lib/auth.js';
 import { getSession } from '../../_lib/pyauth.js';
 
 function forbid() {
   return json({ ok: false, error: 'forbidden' }, 403);
 }
 
+// 站长（SSO isAdmin）或 管理员账户（pianyu_sid）均可通过。
+// 注：pianyu_sid 来自 /api/admin/login（开放、无密码，见 login.js 注释），
+// 与「上新」面板同属「刻意公开」的管理模型，故此处一并放行。
+async function resolveAdmin(request, env) {
+  const sso = await getSession({ request, env });
+  if (sso && sso.isAdmin) return true;
+  const sid = parseCookie(request.headers.get('Cookie') || '', ADMIN_COOKIE);
+  const admin = sid ? await getAdminSession(env, sid) : null;
+  return !!admin;
+}
+
 export async function onRequestGet({ request, env }) {
-  const sess = await getSession({ request, env });
-  if (!sess || !sess.isAdmin) return forbid();
+  if (!(await resolveAdmin(request, env))) return forbid();
 
   const reports = await listOpenReports(env);
   const videos = await listVideos(env);
@@ -31,8 +42,7 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
-  const sess = await getSession({ request, env });
-  if (!sess || !sess.isAdmin) return forbid();
+  if (!(await resolveAdmin(request, env))) return forbid();
 
   let body;
   try {
