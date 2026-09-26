@@ -243,7 +243,7 @@ PY.user = {
       (u.promember && u.promember.active ? '<span class="badge">⚡升级-付费成员</span>' : '') +
       '</div><div class="l">' + PY.esc(u.login ? '@' + u.login : '小蓝页账户') + '</div></div>' +
       '<div class="sep"></div>' +
-      '<a role="menuitem" href="creator.html">屿作台</a>' +
+      '<a role="menuitem" href="creator.html">创作岛</a>' +
       '<a role="menuitem" href="profile.html">我的主页</a>' +
       '<a role="menuitem" href="settings.html">设置</a>' +
       '<a role="menuitem" id="afdianItem" href="' + PY.AFDIAN_URL + '" target="_blank" rel="noopener">⚡ 发电支持 · 升级</a>' +
