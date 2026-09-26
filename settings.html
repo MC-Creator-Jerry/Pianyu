@@ -91,13 +91,22 @@
         <div id="redeemMsg" class="dm-hint"></div>
       </div>
     </div>
+
+    <!-- 管理员专属：设置下方的独立入口（仅站长 / 管理员账户可见） -->
+    <div class="panel" id="adminEntry" style="display:none">
+      <h2>管理员</h2>
+      <p class="hint">你是片屿的管理员，可处理岛民提交的举报。</p>
+      <div><button id="btnOpenAdmin" class="btn primary" type="button">举报处理 →</button></div>
+    </div>
   </section>
 
+  <!-- 管理员 · 举报处理（点上面按钮展开；也可用 #adminPanel 直接进入） -->
   <section id="adminSection" style="display:none">
     <div class="panel" id="adminPanel">
       <h2>管理员 · 举报处理 <span id="reportCount" style="font-size:13px;color:var(--accent);font-weight:600;margin-left:6px"></span></h2>
-      <p class="hint">仅管理员可见。点「跳转查看」前往被举报内容核对，处理完会自动回到这里并定位到原位置。</p>
+      <p class="hint">点「跳转查看」前往被举报内容核对，处理完会自动回到这里并定位到原位置。</p>
       <div id="reportList" class="report-list"></div>
+      <p><button id="btnCloseAdmin" class="btn ghost" type="button">收起</button></p>
     </div>
   </section>
 </main>
@@ -110,7 +119,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260935"></script>
+<script src="assets/pianyu.js?v=20260936"></script>
 <script>
 (async function () {
   document.getElementById('yr').textContent = new Date().getFullYear();
@@ -187,26 +196,62 @@
     });
   }
 
-  /* ---------- 管理员面板（独立于 SSO 登录门，仅管理员可见） ---------- */
-  if (await PY.isAdmin()) {
-    const sec = document.getElementById('adminSection');
-    if (sec) sec.style.display = 'block';
-    if (location.hash.indexOf('adminPanel') >= 0) {
-      setTimeout(() => {
-        const p = document.getElementById('adminPanel');
-        if (p) p.scrollIntoView({ behavior: 'smooth' });
-      }, 80);
-    }
-    PY.renderReports(document.getElementById('reportList'), document.getElementById('reportCount'));
+  /* ---------- 管理员：设置下方的「举报处理」入口（站长 SSO 或 管理员账户） ---------- */
+  // 注意：这段必须在 SSO 登录门之前判断——纯管理员账户(pianyu_sid)可能未 SSO 登录，
+  // 若放在 gate 之后会被 `if (!me) return;` 提前挡掉。
+  const canManage = await PY.isAdmin();
+  if (canManage) {
+    const entry = document.getElementById('adminEntry');
+    if (entry) entry.style.display = 'block';
   }
 
   /* ---------- 档案 ---------- */
   const me = await PY.user.load();
   if (!me) {
-    document.getElementById('gate').style.display = 'block';
+    // 未 SSO 登录：普通岛民显示登录门；但管理员仍可展开举报面板
+    if (canManage) {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      document.querySelectorAll('#content > .panel').forEach((p) => {
+        if (p.id !== 'adminEntry') p.style.display = 'none';
+      });
+    } else {
+      document.getElementById('gate').style.display = 'block';
+      return;
+    }
+  } else {
+    document.getElementById('content').style.display = 'block';
+  }
+
+  /* ---------- 举报面板：点按钮展开 / 收起，支持 #adminPanel 深链 ---------- */
+  function openAdmin() {
+    const sec = document.getElementById('adminSection');
+    if (!sec) return;
+    sec.style.display = 'block';
+    PY.renderReports(document.getElementById('reportList'), document.getElementById('reportCount'));
+    setTimeout(() => {
+      const p = document.getElementById('adminPanel');
+      if (p) p.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+  }
+  const btnOpen = document.getElementById('btnOpenAdmin');
+  if (btnOpen) btnOpen.onclick = openAdmin;
+  const btnClose = document.getElementById('btnCloseAdmin');
+  if (btnClose) {
+    btnClose.onclick = () => {
+      const sec = document.getElementById('adminSection');
+      if (sec) sec.style.display = 'none';
+    };
+  }
+  if (canManage && location.hash.indexOf('adminPanel') >= 0) openAdmin();
+
+  // 未 SSO 登录的管理员（纯 pianyu_sid）到此为止：只显示管理入口
+  if (!me) {
+    document.getElementById('btnLogout') && (document.getElementById('btnLogout').onclick = () => PY.user.logout());
     return;
   }
-  document.getElementById('content').style.display = 'block';
+
+  /* ---------- 岛民档案（需 SSO 登录） ---------- */
   const rbox = document.getElementById('redeemBox');
   if (rbox) rbox.style.display = 'block';
   renderProMember(me);
@@ -250,3 +295,4 @@
   <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
+
