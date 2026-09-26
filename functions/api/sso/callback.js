@@ -90,6 +90,11 @@ export async function onRequestGet(context) {
   // 顺手把岛民档案写进片屿自己的目录（屿论/定点屿论 显示昵称头像用）
   await upsertUser(kv, { login: d.login, name: d.name, avatar: d.avatar_url });
 
+  // 维护 login -> sub 反查索引：爱发电 Webhook 凭留言里的 GitHub 用户名找 SSO sub 用。
+  // 片屿 promember 以 sub（GitHub user id）为键，而 webhook 只能从订单留言拿到 login（用户名），
+  // 所以 SSO 登录时把「用户名 -> sub」落库，webhook 才能反查到要发放的人。
+  try { await kv.put('login2sub:' + d.login, d.sub); } catch (e) {}
+
   const next = safeNext(rec.next);
   return redirect(next, [sessionCookie(sid, 60 * 60 * 24 * 30), clearSsoStateCookie()]);
 }
