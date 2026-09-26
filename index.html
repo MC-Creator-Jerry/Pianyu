@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#0ea5e9" />
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260928">
+<link rel="stylesheet" href="assets/pianyu.css?v=20260929b">
 </head>
 <body>
 <header class="site-header">
@@ -37,6 +37,10 @@
 <main class="wrap">
   <div class="toolbar">
     <input id="q" class="input search" type="search" placeholder="搜索标题 / 简介 / 标签…" autocomplete="off">
+    <div class="seg" id="sortSeg" role="group" aria-label="排序方式">
+      <button data-s="time" class="on">最新</button>
+      <button data-s="views">流量</button>
+    </div>
     <button id="btnClear" class="btn">清空</button>
   </div>
   <div id="chips" class="chips"></div>
@@ -52,7 +56,7 @@
   </div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260930"></script>
+<script src="assets/pianyu.js?v=20260931"></script>
 <script>
 (function () {
   const grid = document.getElementById('grid');
@@ -61,13 +65,14 @@
   const qInput = document.getElementById('q');
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  let state = { q: '', tag: '' };
+  let state = { q: '', tag: '', sort: (function () { try { return localStorage.getItem('pianyu-sort') || 'time'; } catch (e) { return 'time'; } })() };
   let debounce = null;
 
   async function load() {
     const params = new URLSearchParams();
     if (state.q) params.set('q', state.q);
     if (state.tag) params.set('tag', state.tag);
+    if (state.sort) params.set('sort', state.sort);
     const { data } = await PY.api('/api/videos?' + params.toString());
     const videos = (data && data.videos) || [];
     const tags = (data && data.tags) || [];
@@ -102,6 +107,21 @@
     qInput.value = ''; state.q = ''; state.tag = ''; load();
   };
 
+  /* ---------- 排序方式（最新 / 流量）---------- */
+  const sortSeg = document.getElementById('sortSeg');
+  function paintSort() {
+    sortSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.s === state.sort));
+  }
+  sortSeg.querySelectorAll('button').forEach((b) => {
+    b.onclick = () => {
+      state.sort = b.dataset.s;
+      try { localStorage.setItem('pianyu-sort', state.sort); } catch (e) {}
+      paintSort();
+      load();
+    };
+  });
+  paintSort();
+
   const u = new URLSearchParams(location.search);
   state.q = u.get('q') || '';
   state.tag = u.get('tag') || '';
@@ -112,6 +132,9 @@
   PY.mountHeader();
 })();
 </script>
-  <script src="/assets/scroll-keys.js?v=20260926" defer></script>
+  <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
+
+  <!-- 左下角：前往小蓝页主站（仿新闻站） -->
+  <a class="back-main" href="https://mc-creator-jerry-webpage.pages.dev/" target="_self" title="前往小蓝页主站">⬅ 前往小蓝页</a>
 </body>
 </html>
