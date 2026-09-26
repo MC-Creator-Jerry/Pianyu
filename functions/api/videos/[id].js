@@ -47,6 +47,7 @@ export async function onRequestPatch({ params, request, env }) {
   if (typeof body.cover === 'string') v.cover = body.cover.trim();
   if (typeof body.duration === 'string') v.duration = body.duration.trim();
   if (body.tags !== undefined) v.tags = normalizeTags(body.tags);
+  if (body.workType) v.workType = ['original', 'derivative', 'remix', 'repost'].includes(body.workType) ? body.workType : v.workType;
   v.updatedAt = Date.now();
 
   await saveVideos(env, videos);
