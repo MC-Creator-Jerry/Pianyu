@@ -99,7 +99,10 @@ a:hover { text-decoration: underline; }
 .site-header .login-btn { background: rgba(42,18,14,0.9); color: #ffe9d2; }
 .site-header .login-btn:hover { filter: brightness(1.12); }
 .site-header .avatar-btn .fb { background: rgba(42,18,14,0.9); color: #ffe9d2; }
-.site-header .avatar-btn, .site-header .theme-btn { color: #2a120e; border-color: rgba(42,18,14,0.35); }
+/* 头像胶囊 / 主题按钮自身是 var(--panel) 实底：浅色模式给暖深色文字更贴小红条；
+   深色模式必须沿用主题的亮色 var(--text)，否则会变成深底上的黑字看不见。 */
+html[data-theme='light'] .site-header .avatar-btn,
+html[data-theme='light'] .site-header .theme-btn { color: #2a120e; border-color: rgba(42,18,14,0.35); }
 
 /* ---------------- search + chips ---------------- */
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 22px 0 8px; }
