@@ -31,6 +31,23 @@ export function normalizeTags(input) {
     .filter(Boolean);
 }
 
+// 把外链解析成「可播放」地址：
+//  - B站观看页（www.bilibili.com/video/BV...）→ 官方播放器嵌入地址（观看页拒绝被 iframe 嵌入）
+//  - YouTube 观看页/短链 → 官方 embed 地址
+//  - 其余原样返回
+// 与 watch.html 的 resolvePlayer 保持同源逻辑；两处任一改动需同步。
+export function normalizePlayUrl(url) {
+  if (!url) return url;
+  let m;
+  if ((m = url.match(/bilibili\.com\/video\/(BV[\w]+)/i))) {
+    return 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&high_quality=1&autoplay=0&danmaku=0';
+  }
+  if ((m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/i))) {
+    return 'https://www.youtube.com/embed/' + m[1];
+  }
+  return url;
+}
+
 /* ---------------- admin sessions ---------------- */
 
 export async function createSession(env) {
