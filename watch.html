@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=20260930">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093001">
 </head>
 <body>
 <header class="site-header">
@@ -100,7 +100,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260937"></script>
+<script src="assets/pianyu.js?v=20260938"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -151,6 +151,25 @@
   /* ---------------- load ---------------- */
   let video = null;
 
+  // 把任意外链解析成「可播放」形式：
+  //  - 媒体直链（.mp4 等）→ file 模式（<video>）
+  //  - B站/YouTube 等网页 → 转成官方播放器嵌入地址（原 www.bilibili.com 观看页拒绝被 iframe 嵌入）
+  //  - 其它网页 → 直接 iframe 嵌入
+  function resolvePlayer(v) {
+    const url = (v && v.url) || '';
+    if (/\.(mp4|webm|ogg|ogv|mov|m4v|m3u8)([#?]|$)/i.test(url)) {
+      return { mode: 'file', url };
+    }
+    let m;
+    if ((m = url.match(/bilibili\.com\/video\/(BV[\w]+)/i))) {
+      return { mode: 'embed', url: 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&high_quality=1&autoplay=0&danmaku=0' };
+    }
+    if ((m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/i))) {
+      return { mode: 'embed', url: 'https://www.youtube.com/embed/' + m[1] };
+    }
+    return { mode: 'embed', url };
+  }
+
   async function load() {
     const { res, data } = await PY.api('/api/videos/' + encodeURIComponent(id));
     if (!res.ok || !data || !data.video) {
@@ -162,9 +181,10 @@
     const v = data.video;
     document.title = v.title + ' · 片屿';
 
-    if (v.source === 'embed') {
+    const pr = resolvePlayer(v);
+    if (pr.mode === 'embed') {
       const f = document.createElement('iframe');
-      f.src = v.url;
+      f.src = pr.url;
       f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
       f.setAttribute('allowfullscreen', '');
       f.setAttribute('referrerpolicy', 'no-referrer');
@@ -173,7 +193,7 @@
       dmBar.innerHTML = '<span class="dm-hint">此视频为「嵌入页」模式，播放器由外部站点托管，无法读取播放时间，定点屿论不可用（直链视频支持）。</span>';
     } else {
       video = document.createElement('video');
-      video.src = v.url;
+      video.src = pr.url;
       video.controls = true;
       video.playsInline = true;
       video.preload = 'metadata';
@@ -191,7 +211,7 @@
     document.getElementById('meta').innerHTML =
       `<span>${PY.fmtViews(v.views)} 位岛民看过</span><span>${PY.fmtDate(v.createdAt)}</span>` +
       `<span>由 ${byAv}${PY.esc(by)} 发布</span>` +
-      (v.source === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>') +
+      (pr.mode === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>') +
       (v.workType ? `<span class="wt-badge wt-${v.workType}">${WT[v.workType] || '原创'}</span>` : '');
     document.getElementById('tags').innerHTML = (v.tags || [])
       .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
@@ -422,4 +442,6 @@
   <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
+
+
 
