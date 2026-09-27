@@ -5,7 +5,7 @@
 //                       video carries `author` attribution
 // ============================================================
 
-import { listVideos, saveVideos, newId, normalizeTags } from '../_lib/store.js';
+import { listVideos, saveVideos, newId, normalizeTags, normalizePlayUrl } from '../_lib/store.js';
 import { json } from '../_lib/auth.js';
 import { getActor } from '../_lib/actor.js';
 import { getProMember } from '../_lib/pycode.js';
@@ -50,8 +50,11 @@ export async function onRequestPost({ request, env }) {
   }
 
   const title = String(body.title || '').trim();
-  const url = String(body.url || '').trim();
-  if (!title || !url) return json({ ok: false, error: 'missing_title_or_url' }, 400);
+  const rawUrl = String(body.url || '').trim();
+  if (!title || !rawUrl) return json({ ok: false, error: 'missing_title_or_url' }, 400);
+  // B站/YouTube 观看页 → 官方嵌入地址；同时把 source 强制为 embed（避免被误存成「直链」）
+  const url = normalizePlayUrl(rawUrl);
+  const forcedEmbed = url !== rawUrl || body.source === 'embed';
 
   // 每用户每日上新上限（站长城除外）；爱发电「发布功能升级」用户额外 +10
   const BASE_LIMIT = 6;
@@ -84,7 +87,7 @@ export async function onRequestPost({ request, env }) {
     desc: String(body.desc || '').trim(),
     tags: normalizeTags(body.tags),
     url,
-    source: body.source === 'embed' ? 'embed' : 'file',
+    source: forcedEmbed ? 'embed' : 'file',
     cover: String(body.cover || '').trim(),
     duration: String(body.duration || '').trim(),
     workType: ['original', 'derivative', 'remix', 'repost'].includes(body.workType) ? body.workType : 'original',
