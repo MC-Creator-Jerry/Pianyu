@@ -5,7 +5,7 @@
 //  DELETE /api/videos/:id  -> delete (author, or owner superuser)
 // ============================================================
 
-import { listVideos, saveVideos, normalizeTags } from '../../_lib/store.js';
+import { listVideos, saveVideos, normalizeTags, normalizePlayUrl } from '../../_lib/store.js';
 import { json } from '../../_lib/auth.js';
 import { getActor, canModify } from '../../_lib/actor.js';
 
@@ -42,8 +42,14 @@ export async function onRequestPatch({ params, request, env }) {
 
   if (typeof body.title === 'string' && body.title.trim()) v.title = body.title.trim();
   if (typeof body.desc === 'string') v.desc = body.desc.trim();
-  if (typeof body.url === 'string' && body.url.trim()) v.url = body.url.trim();
-  if (body.source === 'file' || body.source === 'embed') v.source = body.source;
+  if (typeof body.url === 'string' && body.url.trim()) {
+    const rawUrl = body.url.trim();
+    v.url = normalizePlayUrl(rawUrl);
+    if (v.url !== rawUrl) v.source = 'embed';
+    else if (body.source === 'file' || body.source === 'embed') v.source = body.source;
+  } else if (body.source === 'file' || body.source === 'embed') {
+    v.source = body.source;
+  }
   if (typeof body.cover === 'string') v.cover = body.cover.trim();
   if (typeof body.duration === 'string') v.duration = body.duration.trim();
   if (body.tags !== undefined) v.tags = normalizeTags(body.tags);
