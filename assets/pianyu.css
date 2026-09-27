@@ -733,3 +733,48 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
 .cm-item.cm-flagged {
   border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,90,95,.25);
 }
+
+/* 管理员「更改页面布局」浮动按钮：固定到屏幕右下角（不依赖 editbar.css 注入时机） */
+.float-actions {
+  position: fixed !important;
+  top: auto !important; left: auto !important;
+  right: 20px !important;
+  bottom: 20px !important;
+  z-index: 150 !important;
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+  width: max-content; max-width: calc(100vw - 24px);
+}
+.fab {
+  width: 50px; height: 42px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 14px; font-size: 1.25rem; line-height: 1; color: var(--text, #1c2733);
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  cursor: pointer; padding: 0; box-sizing: border-box;
+  text-decoration: none;
+  transition: background .18s, transform .12s, box-shadow .18s;
+}
+.fab:hover { background: rgba(255, 255, 255, 0.97); transform: translateY(-2px); }
+.fab:active { transform: scale(0.94); }
+.fab svg { width: 22px; height: 22px; display: block; }
+html[data-theme="dark"] .fab {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+html[data-theme="dark"] .fab:hover { background: rgba(255, 255, 255, 0.22); }
+@media (orientation: landscape) {
+  .float-actions {
+    position: fixed !important; right: 20px !important;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 150 !important; flex-direction: row !important;
+  }
+}
+@media (max-width: 560px) {
+  .fab { width: 46px; height: 40px; border-radius: 12px; }
+  .fab svg { width: 20px; height: 20px; }
+}
