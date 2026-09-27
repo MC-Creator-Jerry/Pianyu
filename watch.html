@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093001">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093002">
 </head>
 <body>
 <header class="site-header">
@@ -100,7 +100,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260938"></script>
+<script src="assets/pianyu.js?v=20260939"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -155,19 +155,90 @@
   //  - 媒体直链（.mp4 等）→ file 模式（<video>）
   //  - B站/YouTube 等网页 → 转成官方播放器嵌入地址（原 www.bilibili.com 观看页拒绝被 iframe 嵌入）
   //  - 其它网页 → 直接 iframe 嵌入
+  // 同时标记 host 与 blockedCN（境内网络通常无法直连），供渲染兜底使用。
+  function hostOf(u) { try { return new URL(u).hostname.toLowerCase(); } catch (e) { return ''; } }
+  // 这些平台在中国大陆网络通常被拦截 / 无法直连（GFW）
+  const BLOCKED_CN = [
+    /(^|\.)youtube\.com$/, /(^|\.)youtu\.be$/, /(^|\.)youtube-nocookie\.com$/,
+    /(^|\.)vimeo\.com$/, /(^|\.)twitter\.com$/, /(^|\.)x\.com$/,
+    /(^|\.)facebook\.com$/, /(^|\.)instagram\.com$/, /(^|\.)tiktok\.com$/,
+    /(^|\.)dailymotion\.com$/, /(^|\.)twitch\.tv$/, /(^|\.)netflix\.com$/,
+    /(^|\.)reddit\.com$/, /(^|\.)medium\.com$/, /(^|\.)vk\.com$/,
+  ];
+  function blockedInCN(host) { return BLOCKED_CN.some((re) => re.test(host)); }
+
   function resolvePlayer(v) {
-    const url = (v && v.url) || '';
-    if (/\.(mp4|webm|ogg|ogv|mov|m4v|m3u8)([#?]|$)/i.test(url)) {
-      return { mode: 'file', url };
+    const raw = (v && v.url) || '';
+    if (/\.(mp4|webm|ogg|ogv|mov|m4v|m3u8)([#?]|$)/i.test(raw)) {
+      return { mode: 'file', url: raw, raw, host: hostOf(raw), blockedCN: false };
     }
     let m;
-    if ((m = url.match(/bilibili\.com\/video\/(BV[\w]+)/i))) {
-      return { mode: 'embed', url: 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&high_quality=1&autoplay=0&danmaku=0' };
+    if ((m = raw.match(/bilibili\.com\/video\/(BV[\w]+)/i))) {
+      const u = 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&high_quality=1&autoplay=0&danmaku=0';
+      return { mode: 'embed', url: u, raw, host: 'bilibili.com', blockedCN: false };
     }
-    if ((m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/i))) {
-      return { mode: 'embed', url: 'https://www.youtube.com/embed/' + m[1] };
+    if ((m = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/i))) {
+      return { mode: 'embed', url: 'https://www.youtube.com/embed/' + m[1], raw, host: 'youtube.com', blockedCN: true };
     }
-    return { mode: 'embed', url };
+    const h = hostOf(raw);
+    return { mode: 'embed', url: raw, raw, host: h, blockedCN: blockedInCN(h) };
+  }
+
+  // 嵌入播放器未能加载（被网络拦截 / 平台限制）时的兜底卡片：
+  // 提供「在新标签打开原视频」与「仍要尝试加载」。
+  function renderEmbedFallback(raw, hostLabel, proactive) {
+    const wrap = document.createElement('div');
+    wrap.className = 'player-blocked';
+    const note = proactive
+      ? '该内容来自境外平台（' + PY.esc(hostLabel) + '），中国大陆网络通常会拦截或无法直连。'
+      : '嵌入播放器未能加载，可能是当前网络拦截了该平台，或平台限制了外部嵌入。';
+    wrap.innerHTML =
+      '<div class="pb-icon">🌐🚫</div>' +
+      '<div class="pb-title">无法在此播放</div>' +
+      '<div class="pb-desc">' + note + '你可以在下方「在新标签打开」直接前往原平台观看。</div>' +
+      '<div class="pb-actions">' +
+        '<a class="btn primary" id="pbOpen" target="_blank" rel="noopener noreferrer">在新标签打开原视频 ↗</a>' +
+        '<button class="btn ghost" id="pbTry" type="button">仍要尝试在此加载</button>' +
+      '</div>';
+    wrap.querySelector('#pbOpen').href = raw;
+    wrap.querySelector('#pbTry').onclick = () => {
+      const f = document.createElement('iframe');
+      f.className = 'player-iframe';
+      f.src = raw;
+      f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+      f.setAttribute('allowfullscreen', '');
+      f.setAttribute('referrerpolicy', 'no-referrer');
+      let loaded = false;
+      f.addEventListener('load', () => { loaded = true; });
+      const t = setTimeout(() => {
+        if (!loaded && f.isConnected) f.replaceWith(renderEmbedFallback(raw, hostLabel, false));
+      }, 12000);
+      f.addEventListener('load', () => clearTimeout(t));
+      wrap.replaceWith(f);
+    };
+    return wrap;
+  }
+
+  // 渲染嵌入：先尝试 iframe；若是境外被墙平台则直接给兜底卡片；
+  // 其余平台若 12s 内未加载（被拦截 / 受限）则换成兜底卡片。
+  function mountEmbed(pr, container) {
+    if (pr.blockedCN) {
+      container.appendChild(renderEmbedFallback(pr.raw, pr.host, true));
+      return;
+    }
+    const f = document.createElement('iframe');
+    f.className = 'player-iframe';
+    f.src = pr.url;
+    f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+    f.setAttribute('allowfullscreen', '');
+    f.setAttribute('referrerpolicy', 'no-referrer');
+    let loaded = false;
+    f.addEventListener('load', () => { loaded = true; });
+    const t = setTimeout(() => {
+      if (!loaded && f.isConnected) f.replaceWith(renderEmbedFallback(pr.raw, pr.host, false));
+    }, 12000);
+    f.addEventListener('load', () => clearTimeout(t));
+    container.appendChild(f);
   }
 
   async function load() {
@@ -183,14 +254,11 @@
 
     const pr = resolvePlayer(v);
     if (pr.mode === 'embed') {
-      const f = document.createElement('iframe');
-      f.src = pr.url;
-      f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
-      f.setAttribute('allowfullscreen', '');
-      f.setAttribute('referrerpolicy', 'no-referrer');
-      host.appendChild(f);
+      mountEmbed(pr, host);
       // embed mode cannot track time -> 定点屿论 unavailable
-      dmBar.innerHTML = '<span class="dm-hint">此视频为「嵌入页」模式，播放器由外部站点托管，无法读取播放时间，定点屿论不可用（直链视频支持）。</span>';
+      dmBar.innerHTML = pr.blockedCN
+        ? '<span class="dm-hint">此视频来自境外平台，境内网络可能受限，已提供「在新标签打开」入口。</span>'
+        : '<span class="dm-hint">此视频为「嵌入页」模式，播放器由外部站点托管，无法读取播放时间，定点屿论不可用（直链视频支持）。</span>';
     } else {
       video = document.createElement('video');
       video.src = pr.url;
@@ -211,7 +279,7 @@
     document.getElementById('meta').innerHTML =
       `<span>${PY.fmtViews(v.views)} 位岛民看过</span><span>${PY.fmtDate(v.createdAt)}</span>` +
       `<span>由 ${byAv}${PY.esc(by)} 发布</span>` +
-      (pr.mode === 'embed' ? '<span>外链嵌入</span>' : '<span>外链直链</span>') +
+      (pr.mode === 'file' ? '<span>外链直链</span>' : (pr.blockedCN ? '<span class="wt-badge" style="background:#7a3b3b;color:#ffd9d9;border-color:#7a3b3b">境外·可能受限</span>' : '<span>外链嵌入</span>')) +
       (v.workType ? `<span class="wt-badge wt-${v.workType}">${WT[v.workType] || '原创'}</span>` : '');
     document.getElementById('tags').innerHTML = (v.tags || [])
       .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
