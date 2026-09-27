@@ -431,7 +431,7 @@ PY.theme.apply(PY.theme.resolve());
 
 /* ---------------- 管理员「更改页面布局」按钮（仿小蓝页，仅站主可见） ---------------- */
 // 编辑器 editbar.js 站点无关：用 /api/page-edit 相对路径 + curPath()，一套代码覆盖四站。
-PY.EDITBAR_VER = '20260926b';
+PY.EDITBAR_VER = 'v20260927-01';
 PY.loadEditbar = function () {
   if (window.XLEdit) return;
   var s = document.createElement('script');
