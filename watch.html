@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093002">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093003">
 </head>
 <body>
 <header class="site-header">
@@ -54,6 +54,7 @@
 
   <h1 id="title" class="watch-title"></h1>
   <div id="meta" class="watch-meta"></div>
+  <div id="srcLine" class="watch-src" style="display:none"></div>
   <div id="tags" class="tags"></div>
     <div id="desc" class="watch-desc"></div>
 
@@ -285,6 +286,14 @@
       .map((t) => `<a class="tag" href="index.html?tag=${encodeURIComponent(t)}">${PY.esc(t)}</a>`)
       .join(' ');
     document.getElementById('desc').textContent = v.desc || '';
+    // 引用外站时，在播放器下方显示原网站地址，便于查看 / 复制
+    const srcEl = document.getElementById('srcLine');
+    if (pr.mode === 'embed' && !pr.blockedCN) {
+      srcEl.style.display = '';
+      srcEl.innerHTML = '原网站地址：<a href="' + PY.esc(pr.raw) + '" target="_blank" rel="noopener noreferrer">' + PY.esc(pr.raw) + '</a>';
+    } else {
+      srcEl.style.display = 'none';
+    }
 
     loadDanmaku();
     loadComments();
