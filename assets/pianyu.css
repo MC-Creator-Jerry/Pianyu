@@ -402,6 +402,21 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
 .nav a:hover { color: var(--text); background: var(--panel); text-decoration: none; }
 .nav a.on { color: var(--on-accent); background: linear-gradient(120deg, var(--accent), var(--accent-2)); font-weight: 600; }
 
+/* ---------------- 自定义播放器（直链视频） ---------------- */
+.py-player { position: relative; width: 100%; background: #000; }
+.py-player video { width: 100%; display: block; aspect-ratio: 16 / 9; background: #000; }
+.py-controls { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(8,14,26,0.94); color: #e8eef8; }
+.py-btn { background: transparent; border: 0; color: inherit; font-size: 15px; line-height: 1; cursor: pointer; padding: 4px 7px; border-radius: 8px; }
+.py-btn:hover { background: rgba(255,255,255,0.14); }
+.py-time { font-size: 12px; color: #c6d3e6; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.py-seek { position: relative; flex: 1; height: 6px; background: #2a3a57; border-radius: 999px; cursor: pointer; min-width: 60px; }
+.py-seek .py-buffered { position: absolute; left: 0; top: 0; height: 100%; width: 0; background: #41557a; border-radius: 999px; }
+.py-seek .py-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, #ff5a5f, #fb923c); border-radius: 999px; }
+.py-vol { width: 70px; accent-color: #ff5a5f; }
+.py-speed { background: #1a2942; color: #e8eef8; border: 1px solid #2a3a57; border-radius: 8px; padding: 3px 6px; font-size: 12px; }
+.py-bigplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; border-radius: 50%; border: 0; background: rgba(255,90,95,0.85); color: #fff; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 6; }
+.py-bigplay:hover { background: #ff5a5f; }
+
 /* ---------------- 定点屿论 (danmaku) ---------------- */
 .player-wrap { position: relative; }
 .dm-layer {
