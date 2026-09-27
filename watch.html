@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093003">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093004">
 </head>
 <body>
 <header class="site-header">
@@ -242,6 +242,96 @@
     container.appendChild(f);
   }
 
+  function fmtTime(t) {
+    if (!isFinite(t) || t < 0) t = 0;
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    if (m >= 60) { const h = Math.floor(m / 60); return h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  // 直链视频（.mp4 等）的自定义播放器：主题化控件，替代原生 controls。
+  // 保留传入的 <video> 元素本身（定点屿论依赖 video.currentTime），只在外层加控件。
+  function enhanceFilePlayer(vid) {
+    const wrap = document.createElement('div');
+    wrap.className = 'py-player';
+    vid.parentNode.insertBefore(wrap, vid);
+    wrap.appendChild(vid);
+
+    const bar = document.createElement('div');
+    bar.className = 'py-controls';
+    bar.innerHTML =
+      '<button class="py-btn py-play" type="button" aria-label="播放/暂停">▶</button>' +
+      '<span class="py-time"><span class="py-cur">0:00</span> / <span class="py-dur">0:00</span></span>' +
+      '<div class="py-seek" role="slider" aria-label="进度" tabindex="0"><div class="py-buffered"></div><div class="py-progress"></div></div>' +
+      '<button class="py-btn py-mute" type="button" aria-label="静音">🔊</button>' +
+      '<input class="py-vol" type="range" min="0" max="100" value="100" aria-label="音量">' +
+      '<select class="py-speed" aria-label="倍速"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>' +
+      '<button class="py-btn py-fs" type="button" aria-label="全屏">⛶</button>';
+    wrap.appendChild(bar);
+
+    const big = document.createElement('button');
+    big.className = 'py-bigplay';
+    big.type = 'button';
+    big.setAttribute('aria-label', '播放');
+    big.textContent = '▶';
+    wrap.appendChild(big);
+
+    const $ = (s) => wrap.querySelector(s);
+    const playBtn = $('.py-play'), curEl = $('.py-cur'), durEl = $('.py-dur'),
+      seek = $('.py-seek'), buf = $('.py-buffered'), prog = $('.py-progress'),
+      muteBtn = $('.py-mute'), vol = $('.py-vol'), speed = $('.py-speed'), fsBtn = $('.py-fs');
+
+    function toggle() { if (vid.paused) vid.play().catch(() => {}); else vid.pause(); }
+    function syncIcon() { const p = !vid.paused; playBtn.textContent = p ? '❚❚' : '▶'; big.style.display = p ? 'none' : 'flex'; }
+    playBtn.onclick = toggle;
+    big.onclick = toggle;
+    vid.addEventListener('click', toggle);
+    vid.addEventListener('play', syncIcon);
+    vid.addEventListener('pause', syncIcon);
+
+    vid.addEventListener('loadedmetadata', () => { durEl.textContent = fmtTime(vid.duration); });
+    vid.addEventListener('timeupdate', () => {
+      const d = vid.duration || 0, c = vid.currentTime || 0;
+      curEl.textContent = fmtTime(c);
+      if (d) prog.style.width = (c / d * 100) + '%';
+    });
+    vid.addEventListener('progress', () => {
+      try {
+        if (vid.buffered.length && vid.duration) {
+          const end = vid.buffered.end(vid.buffered.length - 1);
+          buf.style.width = (end / vid.duration * 100) + '%';
+        }
+      } catch (e) {}
+    });
+
+    function seekTo(clientX) {
+      const r = seek.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+      if (vid.duration) vid.currentTime = ratio * vid.duration;
+    }
+    seek.addEventListener('click', (e) => seekTo(e.clientX));
+    seek.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 5); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - 5); e.preventDefault(); }
+    });
+
+    muteBtn.onclick = () => { vid.muted = !vid.muted; muteBtn.textContent = vid.muted ? '🔇' : '🔊'; };
+    vol.oninput = () => { vid.volume = vol.value / 100; vid.muted = vid.volume === 0; muteBtn.textContent = vid.muted ? '🔇' : '🔊'; };
+    speed.onchange = () => { vid.playbackRate = parseFloat(speed.value); };
+    fsBtn.onclick = () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (wrap.requestFullscreen) wrap.requestFullscreen();
+    };
+    wrap.addEventListener('dblclick', (e) => { if (e.target !== vol && e.target !== speed) fsBtn.click(); });
+    wrap.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'k') { toggle(); e.preventDefault(); }
+      else if (e.key === 'f') { fsBtn.click(); }
+      else if (e.key === 'm') { muteBtn.click(); }
+    });
+    wrap.tabIndex = 0;
+    syncIcon();
+  }
+
   async function load() {
     const { res, data } = await PY.api('/api/videos/' + encodeURIComponent(id));
     if (!res.ok || !data || !data.video) {
@@ -263,11 +353,11 @@
     } else {
       video = document.createElement('video');
       video.src = pr.url;
-      video.controls = true;
       video.playsInline = true;
       video.preload = 'metadata';
       if (v.cover) video.poster = v.cover;
       host.appendChild(video);
+      enhanceFilePlayer(video);
       startDmLoop();
     }
 
