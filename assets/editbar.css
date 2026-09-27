@@ -1169,3 +1169,85 @@ html[data-theme="dark"] .fab:hover { background: rgba(255, 255, 255, 0.22); }
 @media (orientation: landscape) and (max-width: 560px) {
   .float-actions { right: max(12px, env(safe-area-inset-right, 0px)) !important; bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; gap: 8px !important; }
 }
+
+
+/* ===== M365 扩展：按钮图标 / 符号面板 / 标尺（editbar 20260926k） ===== */
+.xl-tb-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 46px; line-height: 1.15; }
+.xl-tb-ico { display: inline-flex; }
+.xl-tb-ico svg { display: block; }
+.xl-tb-txt { font-size: 11px; white-space: nowrap; }
+.xl-sym-mask { position: fixed; inset: 0; background: rgba(0,0,0,.28); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.xl-sym-panel { background: var(--card-bg,#fff); color: var(--text,#222); border-radius: 12px; padding: 14px; width: min(420px, 92vw); box-shadow: 0 12px 40px rgba(0,0,0,.28); }
+.xl-sym-title { font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.xl-sym-close { border: none; background: rgba(127,127,127,.15); border-radius: 6px; width: 26px; height: 26px; cursor: pointer; }
+.xl-sym-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.xl-sym-cell { border: 1px solid var(--card-border,#e2e6ee); background: transparent; border-radius: 6px; height: 34px; font-size: 16px; cursor: pointer; }
+.xl-sym-cell:hover { background: rgba(127,127,127,.12); }
+body.xl-show-ruler::after { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 18px; background: repeating-linear-gradient(90deg, #b9bdc7 0 1px, transparent 1px 40px); border-bottom: 1px solid #9aa0ab; z-index: 300; pointer-events: none; }
+
+/* ===== M365 Home 扩展（editbar 20260926l） ===== */
+/* 快速访问工具栏（Undo/Redo） */
+.xl-edit-banner .xl-edit-qa .xl-tb-btn { padding: 4px 6px; min-width: 22px; }
+
+/* 大粘贴按钮（Word 剪贴板组左侧大按钮） */
+.xl-edit-banner .xl-tb-paste-wrap { position: relative; display: inline-flex; flex-direction: column; }
+.xl-edit-banner .xl-tb-paste-btn {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 46px; min-height: 44px; padding: 4px 8px;
+  border: 1px solid transparent; border-radius: 4px;
+  background: transparent; color: #242424; cursor: pointer; font-family: inherit;
+}
+.xl-edit-banner .xl-tb-paste-btn:hover { background: #f0f0f0; }
+.xl-edit-banner .xl-tb-paste-ico { font-size: 18px; line-height: 1; }
+.xl-edit-banner .xl-tb-paste-label { font-size: 11px; margin-top: 2px; }
+.xl-edit-banner .xl-tb-paste-menu {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 1260;
+  background: var(--card-bg, #fff); color: var(--text, #1c2733);
+  border: 1px solid var(--card-border, #e0e0e0); border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18); min-width: 160px; padding: 4px;
+}
+.xl-edit-banner .xl-tb-paste-menu.open { display: block; }
+
+/* 显示/隐藏编辑标记 */
+.xl-show-marks br::after { content: '¶'; color: var(--accent); opacity: .5; }
+.xl-show-marks p::after { content: '¶'; color: var(--accent); opacity: .5; }
+
+/* 深色主题 */
+html[data-theme="dark"] .xl-edit-banner .xl-tb-paste-btn { color: #f3f2f1; }
+html[data-theme="dark"] .xl-edit-banner .xl-tb-paste-btn:hover { background: #333231; }
+
+/* ===== M365 Home 扩展 20260926m：增大/减小字号按钮 ===== */
+.xl-edit-banner .xl-tb-fs-btn {
+  padding: 3px 6px; min-width: 24px; font-size: 13px; font-weight: 600;
+}
+
+/* ===== M365 Home 扩展 20260926n：剪贴板/字体/段落/样式/迷你工具栏 ===== */
+.xl-edit-banner .xl-clip-row { display: flex; align-items: stretch; gap: 4px; }
+.xl-edit-banner .xl-tb-paste-right { display: flex; flex-direction: column; justify-content: space-between; gap: 2px; }
+.xl-edit-banner .xl-tb-paste-right .xl-tb-btn { padding: 2px 6px; font-size: 12px; min-height: 0; text-align: left; }
+.xl-edit-banner .xl-tb-clear-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 4px; background: transparent; color: #242424; cursor: pointer; }
+.xl-edit-banner .xl-tb-clear-btn:hover { background: #f0f0f0; }
+.xl-edit-banner .xl-tb-clear-ico { font-size: 14px; line-height: 1; }
+.xl-edit-banner .xl-style-gallery .xl-rbn-row { gap: 4px; }
+.xl-edit-banner .xl-style-item { min-width: 64px; padding: 5px 8px; border: 1px solid #e0e0e0; background: #fff; font-size: 12.5px; text-align: left; }
+.xl-edit-banner .xl-style-item:hover { background: #f8f8f8; border-color: #c8c8c8; }
+.xl-edit-banner .xl-style-head { font-size: 14px; font-weight: 700; color: #7b68ee; border-color: #d6d0f5; }
+.xl-mini-toolbar.open { display: flex; flex-direction: column; gap: 3px; }
+.xl-mini-toolbar .xl-mini-row { display: flex; align-items: center; gap: 2px; }
+.xl-mini-toolbar .xl-mini-select,
+.xl-mini-toolbar .xl-mini-size { font-family: inherit; font-size: 12px; border: 1px solid #d1d1d1; background: #fff; color: #242424; border-radius: 4px; padding: 3px 5px; height: 26px; }
+.xl-mini-toolbar .xl-mini-select { padding-right: 2px; min-width: 58px; }
+.xl-mini-toolbar .xl-mini-size { width: 42px; }
+.xl-mini-toolbar .xl-mini-fs { padding: 3px 5px; min-width: 22px; font-weight: 600; }
+.xl-mini-toolbar .xl-mini-list { padding: 3px 6px; min-width: 22px; }
+.xl-mini-toolbar .xl-mini-style,
+.xl-mini-toolbar .xl-mini-comment,
+.xl-mini-toolbar .xl-mini-painter,
+.xl-mini-toolbar .xl-mini-clear { padding: 3px 6px; min-width: 22px; font-size: 12px; }
+html[data-theme="dark"] .xl-edit-banner .xl-tb-clear-btn { color: #f3f2f1; }
+html[data-theme="dark"] .xl-edit-banner .xl-tb-clear-btn:hover { background: #333231; }
+html[data-theme="dark"] .xl-edit-banner .xl-style-item { background: #252423; border-color: #3b3a39; color: #f3f2f1; }
+html[data-theme="dark"] .xl-edit-banner .xl-style-item:hover { background: #333231; border-color: #484644; }
+html[data-theme="dark"] .xl-edit-banner .xl-style-head { color: #c6b8ff; border-color: #5a4e8a; }
+html[data-theme="dark"] .xl-mini-toolbar .xl-mini-select,
+html[data-theme="dark"] .xl-mini-toolbar .xl-mini-size { background: #1b1a19; color: #f3f2f1; border-color: #484644; }
