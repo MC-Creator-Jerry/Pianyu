@@ -420,6 +420,16 @@ footer.site-footer .wrap { display: flex; gap: 12px; flex-wrap: wrap; align-item
 .py-speed { background: #1a2942; color: #e8eef8; border: 1px solid #2a3a57; border-radius: 8px; padding: 3px 6px; font-size: 12px; }
 .py-bigplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; border-radius: 50%; border: 0; background: rgba(255,90,95,0.85); color: #fff; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 6; }
 .py-bigplay:hover { background: #ff5a5f; }
+/* 长按倍速临时角标 */
+.py-boost { position: absolute; top: 10px; left: 10px; z-index: 7; display: none; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(255,90,95,0.92); color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 4px 14px rgba(199,78,38,0.5); }
+
+/* 播放方式切换条（片屿播放器 / 网页直连） */
+.player-mode { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; }
+.player-mode .pm-label { font-size: 13px; color: var(--muted); }
+.player-mode .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.player-mode .seg button { border: 0; background: var(--panel); color: var(--text-2); font-size: 13px; padding: 6px 14px; cursor: pointer; }
+.player-mode .seg button + button { border-left: 1px solid var(--line); }
+.player-mode .seg button.on { background: linear-gradient(135deg, #ff5a5f, #fb923c 55%, #fbbf24); color: #fffaf2; font-weight: 600; }
 
 /* ---------------- 定点屿论 (danmaku) ---------------- */
 .player-wrap { position: relative; }
