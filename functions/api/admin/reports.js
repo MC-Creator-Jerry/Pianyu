@@ -17,12 +17,21 @@ function forbid() {
   return json({ ok: false, error: 'forbidden' }, 403);
 }
 
-// 站长（SSO isAdmin）或 管理员账户（pianyu_sid）均可通过。
+// 站长（SSO isAdmin）/ 管理员账户（pianyu_sid）/ 审核员（reviewer:list 中的 SSO 岛民）均可通过。
 // 注：pianyu_sid 来自 /api/admin/login（开放、无密码，见 login.js 注释），
 // 与「上新」面板同属「刻意公开」的管理模型，故此处一并放行。
 async function resolveAdmin(request, env) {
   const sso = await getSession({ request, env });
   if (sso && sso.isAdmin) return true;
+  if (sso && sso.login) {
+    try {
+      const raw = await env.PIANYU_KV.get('reviewer:list');
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.includes(sso.login)) return true;
+      }
+    } catch (e) { /* 忽略 */ }
+  }
   const sid = parseCookie(request.headers.get('Cookie') || '', ADMIN_COOKIE);
   const admin = sid ? await getAdminSession(env, sid) : null;
   return !!admin;
