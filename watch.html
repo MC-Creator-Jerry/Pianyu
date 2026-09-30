@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093007">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093008">
 </head>
 <body>
 <header class="site-header">
@@ -109,7 +109,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260941"></script>
+<script src="assets/pianyu.js?v=20260942"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -332,38 +332,8 @@
       else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - 10); e.preventDefault(); e.stopPropagation(); }
     });
 
-    // 长按画面 = 临时倍速；短按 = 播放/暂停（与 click 区分，避免冲突）
-    const BOOST = 2.5;
-    let pressTimer = null, boosting = false, downX = 0, downY = 0;
-    function enterBoost() {
-      if (boosting || vid.paused) return;
-      boosting = true;
-      boostBadge.textContent = '⏩ ' + BOOST + '×';
-      boostBadge.style.display = 'flex';
-      vid.playbackRate = BOOST;
-    }
-    function exitBoost() {
-      if (!boosting) return;
-      boosting = false;
-      boostBadge.style.display = 'none';
-      vid.playbackRate = parseFloat(speed.value) || 1;
-    }
-    function clearPress() { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } }
-    vid.addEventListener('pointerdown', (e) => {
-      if (e.button) return;
-      downX = e.clientX; downY = e.clientY;
-      clearPress();
-      pressTimer = setTimeout(enterBoost, 350);
-    });
-    vid.addEventListener('pointerup', (e) => {
-      clearPress();
-      if (boosting) { exitBoost(); }
-      else if (e.target === vid && Math.abs((e.clientX || downX) - downX) < 8 && Math.abs((e.clientY || downY) - downY) < 8) {
-        toggle();
-      }
-    });
-    vid.addEventListener('pointerleave', () => { clearPress(); if (boosting) exitBoost(); });
-    vid.addEventListener('pointercancel', () => { clearPress(); if (boosting) exitBoost(); });
+    // 点击画面 = 播放/暂停
+    vid.addEventListener('click', toggle);
 
     muteBtn.onclick = () => { vid.muted = !vid.muted; muteBtn.textContent = vid.muted ? '🔇' : '🔊'; };
     vol.oninput = () => { vid.volume = vol.value / 100; vid.muted = vid.volume === 0; muteBtn.textContent = vid.muted ? '🔇' : '🔊'; };
@@ -373,14 +343,42 @@
       else if (wrap.requestFullscreen) wrap.requestFullscreen();
     };
     wrap.addEventListener('dblclick', (e) => { if (e.target !== vol && e.target !== speed) fsBtn.click(); });
+    // 长按 →（右方向键）= 3.0× 倍速，松开恢复；短按 = 快进 10 秒
+    const BOOST = 3.0;
+    let boostTimer = null, boosting = false, boostDown = false;
     wrap.addEventListener('keydown', (e) => {
       if (e.key === ' ' || e.key === 'k') { toggle(); e.preventDefault(); }
-      else if (e.key === 'ArrowRight') { vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10); e.preventDefault(); }
+      else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (!boostDown) {
+          boostDown = true;
+          boostTimer = setTimeout(() => {
+            boosting = true;
+            boostBadge.textContent = '⏩ ' + BOOST + '×';
+            boostBadge.style.display = 'flex';
+            vid.playbackRate = BOOST;
+          }, 350);
+        }
+      }
       else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - 10); e.preventDefault(); }
       else if (e.key === 'f') { fsBtn.click(); }
       else if (e.key === 'm') { muteBtn.click(); }
     });
+    wrap.addEventListener('keyup', (e) => {
+      if (e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      if (boostTimer) { clearTimeout(boostTimer); boostTimer = null; }
+      if (boosting) {
+        boosting = false;
+        boostBadge.style.display = 'none';
+        vid.playbackRate = parseFloat(speed.value) || 1;
+      } else {
+        vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10);
+      }
+      boostDown = false;
+    });
     wrap.tabIndex = 0;
+    wrap.focus({ preventScroll: true });
     syncIcon();
   }
 
@@ -695,6 +693,7 @@
   <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
+
 
 
 
