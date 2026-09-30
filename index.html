@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#0ea5e9" />
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093005">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093006">
 </head>
 <body>
 <header class="site-header">
@@ -25,10 +25,11 @@
     </a>
     <div class="spacer"></div>
     <nav class="nav">
-      <a href="index.html" class="on">首页</a>
-      <a href="map.html">岛图</a>
-      <a href="admin.html">上新</a>
-      <a href="creator.html">创作岛</a>
+      <a href="index.html" class="on" data-i18n="nav.home">首页</a>
+      <a href="map.html" data-i18n="nav.map">岛图</a>
+      <a href="admin.html" data-i18n="nav.new">上新</a>
+      <a href="creator.html" data-i18n="nav.creator">创作岛</a>
+      <a href="#" data-lang-toggle>EN</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -36,27 +37,28 @@
 
 <main class="wrap">
   <div class="toolbar">
-    <input id="q" class="input search" type="search" placeholder="搜索标题 / 简介 / 标签…" autocomplete="off">
+    <input id="q" class="input search" type="search" placeholder="搜索标题 / 简介 / 标签…" data-i18n-ph="search.placeholder" autocomplete="off">
     <div class="seg" id="sortSeg" role="group" aria-label="排序方式">
-      <button data-s="time" class="on">最新</button>
-      <button data-s="views">流量</button>
+      <button data-s="time" class="on" data-i18n="sort.newest">最新</button>
+      <button data-s="views" data-i18n="sort.views">流量</button>
     </div>
-    <button id="btnClear" class="btn">清空</button>
+    <button id="btnClear" class="btn" data-i18n="btn.clear">清空</button>
   </div>
   <div id="chips" class="chips"></div>
   <div id="grid" class="grid"></div>
-  <div id="empty" class="empty" style="display:none">这里还是一片空岛 —— 去 <a href="admin.html">上新</a> 放上第一个视频吧。</div>
+  <div id="empty" class="empty" style="display:none" data-i18n="empty">这里还是一片空岛 —— 去 上新 放上第一个视频吧。</div>
 </main>
 
 <footer class="site-footer">
   <div class="wrap">
     <span>© <span id="yr"></span> 片屿 · PIANYU</span>
     <span class="spacer"></span>
-    <span>独立站点 · 独立后端（Cloudflare Pages + Functions）</span>
+    <span data-i18n="footer.tagline">独立站点 · 独立后端（Cloudflare Pages + Functions）</span>
   </div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260939"></script>
+<script src="assets/lang.js?v=20260929a"></script>
+<script src="assets/pianyu.js?v=20260940"></script>
 <script>
 (function () {
   const grid = document.getElementById('grid');
@@ -138,6 +140,7 @@
   <a class="back-main" href="https://mc-creator-jerry-webpage.pages.dev/" target="_self" title="前往小蓝页主站">⬅ 前往小蓝页</a>
 </body>
 </html>
+
 
 
 
