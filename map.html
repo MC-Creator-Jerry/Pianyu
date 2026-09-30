@@ -7,7 +7,7 @@
 <meta name="description" content="片屿的岛图 —— 一眼看清这座小岛有哪些功能。">
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093005">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093006">
 </head>
 <body>
 <header class="site-header">
@@ -18,10 +18,11 @@
     </a>
     <div class="spacer"></div>
     <nav class="nav">
-      <a href="index.html">首页</a>
-      <a href="map.html" class="on">岛图</a>
-      <a href="admin.html">上新</a>
-      <a href="creator.html">创作岛</a>
+      <a href="index.html" data-i18n="nav.home">首页</a>
+      <a href="map.html" class="on" data-i18n="nav.map">岛图</a>
+      <a href="admin.html" data-i18n="nav.new">上新</a>
+      <a href="creator.html" data-i18n="nav.creator">创作岛</a>
+      <a href="#" data-lang-toggle>EN</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -83,11 +84,13 @@
 <footer class="site-footer">
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
-<script src="assets/pianyu.js?v=20260939"></script>
+<script src="assets/lang.js?v=20260929a"></script>
+<script src="assets/pianyu.js?v=20260940"></script>
 <script>PY.showSsoNotice(); PY.mountHeader();</script>
   <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
+
 
 
 
