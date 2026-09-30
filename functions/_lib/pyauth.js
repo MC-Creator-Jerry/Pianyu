@@ -119,6 +119,22 @@ export function publicProfile(sess, prefs) {
   };
 }
 
+// 审核员 = 小蓝页 SSO 标记 isAdmin 的站长 / reviewer:list 中的岛民登录名。
+// 审核员比普通成员多一项「审核视频/评论/弹幕举报」的权限。
+export async function isReviewer(context) {
+  const s = await getSession(context);
+  if (!s || !s.login) return false;
+  if (s.isAdmin) return true;
+  try {
+    const raw = await context.env.PIANYU_KV.get('reviewer:list');
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.includes(s.login)) return true;
+    }
+  } catch (e) { /* 忽略 */ }
+  return false;
+}
+
 /* ---------------- 岛民目录 ---------------- */
 
 export async function upsertUser(kv, u) {
