@@ -54,6 +54,71 @@ window.PY = {
   // 作品类型：原创 / 二创 / 三创及以上 / 搬运
   WORK_TYPES: { original: '原创', derivative: '二创', remix: '三创及以上', repost: '搬运' },
 
+  // 直链媒体（可由本地 <video> 静音预览）
+  isDirectMedia(url) {
+    return /\.(mp4|webm|ogg|ogv|mov|m4v|m3u8)([#?]|$)/i.test(url || '');
+  },
+  // 把外链解析成可预览的嵌入地址（B站/YouTube 等）
+  embedUrl(url) {
+    const u = url || '';
+    let m;
+    if ((m = u.match(/bilibili\.com\/video\/(BV[\w]+)/i))) {
+      return 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&high_quality=1&autoplay=0&danmaku=0';
+    }
+    if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/i))) {
+      return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&mute=1';
+    }
+    return null;
+  },
+  // 悬停卡片时启用视频预览（直链静音自动播放；嵌入加载播放器）
+  attachPreview(card, v) {
+    const thumb = card.querySelector('.thumb');
+    if (!thumb) return;
+    const img = thumb.querySelector('img');
+    const ph = thumb.querySelector('.ph');
+    const restore = () => {
+      if (img) img.style.display = '';
+      if (ph) ph.style.display = v.cover ? 'none' : 'flex';
+    };
+    let node = null, busy = false;
+    card.addEventListener('mouseenter', () => {
+      if (busy || node) return;
+      busy = true;
+      const url = v.url || '';
+      if (PY.isDirectMedia(url)) {
+        const vd = document.createElement('video');
+        vd.src = url; vd.muted = true; vd.loop = true; vd.playsInline = true;
+        vd.setAttribute('playsinline', '');
+        vd.className = 'pv';
+        vd.preload = 'auto';
+        thumb.appendChild(vd);
+        node = vd;
+        if (img) img.style.display = 'none';
+        if (ph) ph.style.display = 'none';
+        const p = vd.play();
+        if (p && p.catch) p.catch(() => {});
+      } else {
+        const eu = PY.embedUrl(url);
+        if (!eu) { busy = false; return; }
+        const fr = document.createElement('iframe');
+        fr.src = eu; fr.className = 'pv';
+        fr.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+        fr.setAttribute('allowfullscreen', '');
+        fr.setAttribute('referrerpolicy', 'no-referrer');
+        thumb.appendChild(fr);
+        node = fr;
+        if (img) img.style.display = 'none';
+        if (ph) ph.style.display = 'none';
+      }
+    });
+    card.addEventListener('mouseleave', () => {
+      if (node && node.tagName === 'VIDEO') { try { node.pause(); } catch (e) {} }
+      if (node) { node.remove(); node = null; }
+      restore();
+      busy = false;
+    });
+  },
+
   // Build a card element for a video
   card(v) {
     const a = document.createElement('a');
@@ -78,6 +143,7 @@ window.PY = {
         <div class="meta"><span>${window.PY.fmtViews(v.views)} 位岛民看过</span><span>${window.PY.fmtDate(v.createdAt)}</span>${v.author?`<span>· ${window.PY.esc(v.author.owner?'站长':(v.author.name||'岛民'))} 发布</span>`:''}</div>
         ${tags ? `<div class="tags">${tags}</div>` : ''}
       </div>`;
+    PY.attachPreview(a, v);
     return a;
   },
 
@@ -431,7 +497,7 @@ PY.theme.apply(PY.theme.resolve());
 
 /* ---------------- 管理员「更改页面布局」按钮（仿小蓝页，仅站主可见） ---------------- */
 // 编辑器 editbar.js 站点无关：用 /api/page-edit 相对路径 + curPath()，一套代码覆盖四站。
-PY.EDITBAR_VER = '20260928-01';
+PY.EDITBAR_VER = '20260928-02';
 PY.loadEditbar = function () {
   if (window.XLEdit) return;
   var s = document.createElement('script');
