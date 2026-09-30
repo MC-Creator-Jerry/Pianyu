@@ -54,7 +54,7 @@
     if (editbarCssReady()) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = '/assets/editbar.css?v=20260928-01';
+    link.href = '/assets/editbar.css?v=20260928-02';
     document.head.appendChild(link);
   }
 
@@ -153,6 +153,18 @@
   function xlT(zh, en) {
     try { if (localStorage.getItem('xl_lang') === 'en') return en; } catch (e) {}
     return zh;
+  }
+  // ---------- 双语节点（data-zh/data-en）支持 ----------
+  function curLang() {
+    try { return localStorage.getItem('xl_lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function isBilingualNode(node) {
+    return !!(node && node.hasAttribute && node.hasAttribute('data-zh'));
+  }
+  function stripHtmlToText(html) {
+    var d = document.createElement('div');
+    d.innerHTML = html || '';
+    return (d.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
   // ---------- 图标库（内联 SVG，currentColor 跟随主题） ----------
@@ -293,6 +305,17 @@
           if (!node) return;
           try {
             if (e.type === 'img') { if (node.tagName === 'IMG') node.src = e.value; }
+            else if (e.type === 'text' && isBilingualNode(node)) {
+              // 双语节点：存档写进 data-zh / data-en 属性（而非直接覆盖文本），
+              // 之后的语言切换（applyLang）按当前语言渲染，两种语言都不丢。
+              // 旧存档没有 lang 字段，默认视为中文（历史上都是中文编辑的）。
+              var blang = e.lang === 'en' ? 'en' : 'zh';
+              var bzh = blang === 'zh' ? e.value : (e.alt != null && e.altLang === 'zh' ? e.alt : node.getAttribute('data-zh'));
+              var ben = blang === 'en' ? e.value : (e.alt != null && e.altLang === 'en' ? e.alt : node.getAttribute('data-en'));
+              if (bzh != null) node.setAttribute('data-zh', bzh);
+              if (ben != null) node.setAttribute('data-en', ben);
+              node.innerHTML = curLang() === 'en' ? (ben || '') : (bzh || '');
+            }
             else { node.innerHTML = e.value; }   // 直接写回 HTML，保留字体/颜色/加粗等格式
           } catch (_) {}
         });
@@ -645,7 +668,15 @@
       el.removeEventListener('blur', onBlur);
       el.removeEventListener('focusin', onFocusIn);
       el.removeAttribute('contenteditable');
-      edits[xlKey(el)] = { type: 'text', value: el.innerHTML };
+      if (isBilingualNode(el)) {
+        // 双语节点：记录编辑时语言；已有的另一语言译文（上次确认过的）原样保留
+        var prev = edits[xlKey(el)] || {};
+        var rec = { type: 'text', value: el.innerHTML, lang: curLang() };
+        if (prev.alt != null && prev.altLang && prev.altLang !== rec.lang) { rec.alt = prev.alt; rec.altLang = prev.altLang; }
+        edits[xlKey(el)] = rec;
+      } else {
+        edits[xlKey(el)] = { type: 'text', value: el.innerHTML };
+      }
       markDirty();
       if (activeInner === el) { activeInner = null; savedRange = null; }
     }
@@ -2674,6 +2705,124 @@
       saving = true;
       updateSaveBtn();
     }
+    // 双语保存：涉及 data-zh/data-en 节点（本次编辑过的 + 已存档但缺译文的），
+    // 先自动翻译成另一语言，弹窗让站主确认/修改译文后才开始保存。
+    var pendingTr = collectPendingTranslations();
+    if (pendingTr.length > 0) {
+      saving = false;
+      updateSaveBtn();
+      runTranslations(pendingTr).then(function () {
+        showTranslateConfirm(pendingTr, function () {
+          saving = true;
+          updateSaveBtn();
+          doSave(blocks);
+        }, function () {
+          saving = false;
+          updateSaveBtn();
+        });
+      });
+      return;
+    }
+    doSave(blocks);
+  }
+
+  // 收集保存前需要补另一语言译文的双语文本段（两种语言都齐的不再打扰）
+  function collectPendingTranslations() {
+    var out = [];
+    Object.keys(edits).forEach(function (k) {
+      var e = edits[k];
+      if (!e || e.type !== 'text' || !e.value) return;
+      var node = resolveEditNode(k);
+      if (!isBilingualNode(node)) return;
+      var lang = e.lang === 'en' ? 'en' : 'zh';
+      var altLang = lang === 'en' ? 'zh' : 'en';
+      var hasAlt = e.alt != null && e.altLang === altLang && String(e.alt).trim() !== '';
+      if (hasAlt) return;
+      out.push({ key: k, lang: lang, altLang: altLang, srcText: stripHtmlToText(e.value), alt: '' });
+    });
+    return out;
+  }
+
+  function runTranslations(list) {
+    return Promise.all(list.map(function (p) {
+      if (!p.srcText) return Promise.resolve();
+      return fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: p.srcText.slice(0, 2000), from: p.lang, to: p.altLang })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { p.alt = d && d.translated ? d.translated : ''; })
+        .catch(function () { p.alt = ''; });   // 翻译失败不阻断保存：站主可手填或留空
+    }));
+  }
+
+  function showTranslateConfirm(list, onConfirm, onCancel) {
+    var ov = document.createElement('div');
+    ov.className = 'xl-tr-overlay';
+    var box = document.createElement('div');
+    box.className = 'xl-tr-box';
+    var h = document.createElement('h3');
+    h.textContent = xlT('双语确认 · 自动翻译', 'Bilingual confirm · auto translation');
+    box.appendChild(h);
+    var hint = document.createElement('p');
+    hint.className = 'xl-tr-hint';
+    hint.textContent = xlT('以下段落将同时保存两种语言，译文可直接修改；清空译文则该段只保存当前语言。',
+      'These paragraphs will be saved in both languages. Edit the translation if needed; leave it empty to save the current language only.');
+    box.appendChild(hint);
+    var listEl = document.createElement('div');
+    listEl.className = 'xl-tr-list';
+    list.forEach(function (p) {
+      var item = document.createElement('div');
+      item.className = 'xl-tr-item';
+      var lab = document.createElement('div');
+      lab.className = 'xl-tr-lab';
+      lab.textContent = (p.lang === 'zh' ? '中文' : 'English') + ' → ' + (p.altLang === 'zh' ? '中文' : 'English');
+      item.appendChild(lab);
+      var src = document.createElement('div');
+      src.className = 'xl-tr-src';
+      src.textContent = p.srcText || '（空）';
+      item.appendChild(src);
+      var ta = document.createElement('textarea');
+      ta.className = 'xl-tr-ta';
+      ta.rows = 2;
+      ta.value = p.alt || '';
+      ta.placeholder = xlT('留空则只保存当前语言', 'Leave empty to save current language only');
+      p._ta = ta;
+      item.appendChild(ta);
+      listEl.appendChild(item);
+    });
+    box.appendChild(listEl);
+    var acts = document.createElement('div');
+    acts.className = 'xl-tr-acts';
+    var noBtn = document.createElement('button');
+    noBtn.type = 'button';
+    noBtn.className = 'xl-tr-no';
+    noBtn.textContent = xlT('取消', 'Cancel');
+    var okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.className = 'xl-tr-ok';
+    okBtn.textContent = xlT('确认并保存', 'Confirm & save');
+    acts.appendChild(noBtn);
+    acts.appendChild(okBtn);
+    box.appendChild(acts);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    okBtn.addEventListener('click', function () {
+      list.forEach(function (p) {
+        var alt = ((p._ta && p._ta.value) || '').trim();
+        var e = edits[p.key];
+        if (e && alt) { e.lang = p.lang; e.altLang = p.altLang; e.alt = alt.slice(0, 2000); }
+        // 译文留空：不写 lang/alt，回填时另一语言沿用页面原属性
+      });
+      ov.remove();
+      onConfirm();
+    });
+    noBtn.addEventListener('click', function () { ov.remove(); onCancel(); });
+  }
+
+  function doSave(blocks) {
+    saving = true;
+    updateSaveBtn();
     fetch('/api/page-edit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
