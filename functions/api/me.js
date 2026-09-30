@@ -3,7 +3,7 @@
 //  GET /api/me  -> { ok, user }  (未登录 user = null)
 // ============================================================
 
-import { getSession, getPrefs, publicProfile } from '../_lib/pyauth.js';
+import { getSession, getPrefs, publicProfile, isReviewer } from '../_lib/pyauth.js';
 import { json } from '../_lib/auth.js';
 import { getProMember } from '../_lib/pycode.js';
 
@@ -22,6 +22,11 @@ export async function onRequestGet(context) {
   // 升级状态（爱发电「发布功能升级」）：promember:<sub> 有效则附带（含旧 vip:<sub> 迁移）
   const promember = await getProMember(context.env.PIANYU_KV, sess.sub);
   user.promember = promember;
+
+  // 角色：管理员 > 审核 > 付费成员 > 普通成员
+  const reviewer = await isReviewer(context);
+  user.isReviewer = reviewer;
+  user.role = user.isAdmin ? 'admin' : (reviewer ? 'reviewer' : (promember ? 'sponsor' : 'member'));
 
   return json({ ok: true, user });
 }
