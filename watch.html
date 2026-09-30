@@ -6,7 +6,7 @@
 <title>观看 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093006">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093007">
 </head>
 <body>
 <header class="site-header">
@@ -44,6 +44,14 @@
   <div class="player-wrap">
     <div id="videoHost"></div>
     <div id="dmLayer" class="dm-layer"></div>
+  </div>
+
+  <div class="player-mode" id="playerMode" style="display:none">
+    <span class="pm-label">播放方式</span>
+    <div class="seg" id="modeSeg" role="group" aria-label="播放方式">
+      <button data-mode="pianyu" class="on" type="button">片屿播放器</button>
+      <button data-mode="direct" type="button">网页直连</button>
+    </div>
   </div>
 
   <div class="dm-bar" id="dmBar">
@@ -101,7 +109,7 @@
   <div class="wrap"><span>© 片屿 · PIANYU</span></div>
 </footer>
 
-<script src="assets/pianyu.js?v=20260940"></script>
+<script src="assets/pianyu.js?v=20260941"></script>
 <script>
 (function () {
   const id = PY.qs('id');
@@ -151,6 +159,9 @@
 
   /* ---------------- load ---------------- */
   let video = null;
+  let currentVideo = null, currentPr = null;
+  let dmLoopRunning = false;
+  let playerMode = (function () { try { return localStorage.getItem('pianyu-playmode') === 'direct' ? 'direct' : 'pianyu'; } catch (e) { return 'pianyu'; } })();
 
   // 把任意外链解析成「可播放」形式：
   //  - 媒体直链（.mp4 等）→ file 模式（<video>）
@@ -276,6 +287,13 @@
     big.textContent = '▶';
     wrap.appendChild(big);
 
+    // 长按倍速角标
+    const boostBadge = document.createElement('div');
+    boostBadge.className = 'py-boost';
+    boostBadge.style.display = 'none';
+    boostBadge.textContent = '⏩';
+    wrap.appendChild(boostBadge);
+
     const $ = (s) => wrap.querySelector(s);
     const playBtn = $('.py-play'), curEl = $('.py-cur'), durEl = $('.py-dur'),
       seek = $('.py-seek'), buf = $('.py-buffered'), prog = $('.py-progress'),
@@ -285,7 +303,6 @@
     function syncIcon() { const p = !vid.paused; playBtn.textContent = p ? '❚❚' : '▶'; big.style.display = p ? 'none' : 'flex'; }
     playBtn.onclick = toggle;
     big.onclick = toggle;
-    vid.addEventListener('click', toggle);
     vid.addEventListener('play', syncIcon);
     vid.addEventListener('pause', syncIcon);
 
@@ -311,13 +328,46 @@
     }
     seek.addEventListener('click', (e) => seekTo(e.clientX));
     seek.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') { vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 5); e.preventDefault(); }
-      else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - 5); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10); e.preventDefault(); e.stopPropagation(); }
+      else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - 10); e.preventDefault(); e.stopPropagation(); }
     });
+
+    // 长按画面 = 临时倍速；短按 = 播放/暂停（与 click 区分，避免冲突）
+    const BOOST = 2.5;
+    let pressTimer = null, boosting = false, downX = 0, downY = 0;
+    function enterBoost() {
+      if (boosting || vid.paused) return;
+      boosting = true;
+      boostBadge.textContent = '⏩ ' + BOOST + '×';
+      boostBadge.style.display = 'flex';
+      vid.playbackRate = BOOST;
+    }
+    function exitBoost() {
+      if (!boosting) return;
+      boosting = false;
+      boostBadge.style.display = 'none';
+      vid.playbackRate = parseFloat(speed.value) || 1;
+    }
+    function clearPress() { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } }
+    vid.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      downX = e.clientX; downY = e.clientY;
+      clearPress();
+      pressTimer = setTimeout(enterBoost, 350);
+    });
+    vid.addEventListener('pointerup', (e) => {
+      clearPress();
+      if (boosting) { exitBoost(); }
+      else if (e.target === vid && Math.abs((e.clientX || downX) - downX) < 8 && Math.abs((e.clientY || downY) - downY) < 8) {
+        toggle();
+      }
+    });
+    vid.addEventListener('pointerleave', () => { clearPress(); if (boosting) exitBoost(); });
+    vid.addEventListener('pointercancel', () => { clearPress(); if (boosting) exitBoost(); });
 
     muteBtn.onclick = () => { vid.muted = !vid.muted; muteBtn.textContent = vid.muted ? '🔇' : '🔊'; };
     vol.oninput = () => { vid.volume = vol.value / 100; vid.muted = vid.volume === 0; muteBtn.textContent = vid.muted ? '🔇' : '🔊'; };
-    speed.onchange = () => { vid.playbackRate = parseFloat(speed.value); };
+    speed.onchange = () => { if (!boosting) vid.playbackRate = parseFloat(speed.value); };
     fsBtn.onclick = () => {
       if (document.fullscreenElement) document.exitFullscreen();
       else if (wrap.requestFullscreen) wrap.requestFullscreen();
@@ -325,6 +375,8 @@
     wrap.addEventListener('dblclick', (e) => { if (e.target !== vol && e.target !== speed) fsBtn.click(); });
     wrap.addEventListener('keydown', (e) => {
       if (e.key === ' ' || e.key === 'k') { toggle(); e.preventDefault(); }
+      else if (e.key === 'ArrowRight') { vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - 10); e.preventDefault(); }
       else if (e.key === 'f') { fsBtn.click(); }
       else if (e.key === 'm') { muteBtn.click(); }
     });
@@ -343,23 +395,11 @@
     const v = data.video;
     document.title = v.title + ' · 片屿';
 
-    const pr = resolvePlayer(v);
-    if (pr.mode === 'embed') {
-      mountEmbed(pr, host);
-      // embed mode cannot track time -> 定点屿论 unavailable
-      dmBar.innerHTML = pr.blockedCN
-        ? '<span class="dm-hint">此视频来自境外平台，境内网络可能受限，已提供「在新标签打开」入口。</span>'
-        : '<span class="dm-hint">此视频为「嵌入页」模式，播放器由外部站点托管，无法读取播放时间，定点屿论不可用（直链视频支持）。</span>';
-    } else {
-      video = document.createElement('video');
-      video.src = pr.url;
-      video.playsInline = true;
-      video.preload = 'metadata';
-      if (v.cover) video.poster = v.cover;
-      host.appendChild(video);
-      enhanceFilePlayer(video);
-      startDmLoop();
-    }
+    currentVideo = v;
+    currentPr = resolvePlayer(v);
+    document.getElementById('playerMode').style.display = '';
+    paintModeSeg();
+    renderPlayer();
 
     document.getElementById('title').textContent = v.title;
     const by = v.author ? (v.author.owner ? '站长' : (v.author.name || '岛民')) : '未知';
@@ -396,6 +436,8 @@
   }
 
   function startDmLoop() {
+    if (dmLoopRunning) return;
+    dmLoopRunning = true;
     let last = -1;
     function tick() {
       requestAnimationFrame(tick);
@@ -411,6 +453,50 @@
       });
     }
     requestAnimationFrame(tick);
+  }
+
+  // 按当前播放方式（片屿播放器 / 网页直连）渲染播放器
+  function renderPlayer() {
+    host.innerHTML = '';
+    video = null;
+    const v = currentVideo, pr = currentPr;
+    if (!v || !pr) return;
+    if (pr.mode === 'embed') {
+      mountEmbed(pr, host);
+      dmBar.innerHTML = playerMode === 'direct'
+        ? '<span class="dm-hint">网页直连模式：由 ' + PY.esc(pr.host) + ' 原站播放器托管，片屿控件（倍速 / 长按）不生效。</span>'
+        : (pr.blockedCN
+            ? '<span class="dm-hint">此视频来自境外平台，境内网络可能受限，已提供「在新标签打开」入口。</span>'
+            : '<span class="dm-hint">此视频为「嵌入页」模式，播放器由外部站点托管，无法读取播放时间，定点屿论不可用（直链视频支持）。</span>');
+    } else {
+      video = document.createElement('video');
+      video.src = pr.url;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      if (v.cover) video.poster = v.cover;
+      host.appendChild(video);
+      if (playerMode === 'direct') {
+        video.controls = true; // 网页直连：浏览器原生播放器
+      } else {
+        enhanceFilePlayer(video);
+      }
+      startDmLoop();
+    }
+  }
+
+  function paintModeSeg() {
+    document.querySelectorAll('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === playerMode));
+  }
+  const modeSeg = document.getElementById('modeSeg');
+  if (modeSeg) {
+    modeSeg.querySelectorAll('button').forEach((b) => {
+      b.onclick = () => {
+        playerMode = b.dataset.mode;
+        try { localStorage.setItem('pianyu-playmode', playerMode); } catch (e) {}
+        paintModeSeg();
+        renderPlayer();
+      };
+    });
   }
 
   document.getElementById('dmSend').onclick = async () => {
@@ -609,6 +695,7 @@
   <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
+
 
 
 
