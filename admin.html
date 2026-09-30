@@ -6,7 +6,7 @@
 <title>上新 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093005">
+<link rel="stylesheet" href="assets/pianyu.css?v=2026093006">
 </head>
 <body>
 <header class="site-header">
@@ -17,11 +17,12 @@
     </a>
     <div class="spacer"></div>
     <nav class="nav">
-      <a href="index.html">首页</a>
-      <a href="map.html">岛图</a>
-      <a href="admin.html" class="on">上新</a>
-      <a href="creator.html">创作岛</a>
-      <a href="manage.html">管理</a>
+      <a href="index.html" data-i18n="nav.home">首页</a>
+      <a href="map.html" data-i18n="nav.map">岛图</a>
+      <a href="admin.html" class="on" data-i18n="nav.new">上新</a>
+      <a href="creator.html" data-i18n="nav.creator">创作岛</a>
+      <a href="manage.html" data-i18n="nav.manage">管理</a>
+      <a href="#" data-lang-toggle>EN</a>
     </nav>
     <div class="hdr-right" id="hdrRight"></div>
   </div>
@@ -109,7 +110,8 @@
 
 <footer class="site-footer"><div class="wrap"><span>© 片屿 · PIANYU</span></div></footer>
 
-<script src="assets/pianyu.js?v=20260939"></script>
+<script src="assets/lang.js?v=20260929a"></script>
+<script src="assets/pianyu.js?v=20260940"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -279,7 +281,7 @@
     const cp = $('codePanel');
     if (cp) cp.style.display = (me && me.isAdmin) ? 'block' : 'none';
     const rp = $('reportPanel');
-    if (rp) rp.style.display = (me && me.isAdmin) ? 'block' : 'none';
+    if (rp) rp.style.display = (me && (me.isAdmin || me.isReviewer)) ? 'block' : 'none';
     if (me && me.isAdmin) {
       const gen = $('btnGenCodes');
       if (gen) gen.onclick = async () => {
@@ -301,6 +303,9 @@
         if (res.ok) loadCodes();
       };
       loadCodes();
+    }
+    // 举报处理面板：站长或审核员均可见可操作
+    if (me && (me.isAdmin || me.isReviewer)) {
       PY.renderReports($('reportList'), $('reportCount'));
     }
     resetForm();
@@ -324,6 +329,7 @@
   <script src="/assets/scroll-keys.js?v=20260926c" defer></script>
 </body>
 </html>
+
 
 
 
