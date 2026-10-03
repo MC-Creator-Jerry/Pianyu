@@ -6,7 +6,7 @@
 <title>上新 · 片屿</title>
 <script>try{var p=localStorage.getItem('pianyu-theme')||'auto';var t=(p==='light'||p==='dark')?p:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="icon" href="assets/favicon.svg?v=6" type="image/svg+xml">
-<link rel="stylesheet" href="assets/pianyu.css?v=2026093008">
+<link rel="stylesheet" href="assets/pianyu.css?v=20261001a">
 </head>
 <body>
 <header class="site-header">
@@ -108,10 +108,13 @@
   </section>
 </main>
 
-<footer class="site-footer"><div class="wrap"><span>© 片屿 · PIANYU</span></div></footer>
+<footer class="site-footer">
+  <div>片屿 · PIANYU —— <span data-i18n="footer.motto">小岛不大，好片管够。</span></div>
+  <div style="margin-top:6px">© <span id="yr"></span> Jerry · 片屿 · <a href="https://mc-creator-jerry-webpage.pages.dev/" data-i18n="footer.main">小蓝页（主站）</a></div>
+</footer>
 
-<script src="assets/lang.js?v=20260929a"></script>
-<script src="assets/pianyu.js?v=20260942"></script>
+<script src="assets/lang.js?v=20261001a"></script>
+<script src="assets/pianyu.js?v=20261001a"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
