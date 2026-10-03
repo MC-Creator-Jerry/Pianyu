@@ -20,7 +20,9 @@
     'btn.clear': { zh: '清空', en: 'Clear' },
     'empty': { zh: '这里还是一片空岛 —— 去 上新 放上第一个视频吧。', en: 'This island is empty — upload your first video from 上新.' },
     'footer.copy': { zh: '© ', en: '© ' },
-    'footer.tagline': { zh: '独立站点 · 独立后端（Cloudflare Pages + Functions）', en: 'Independent site · own backend (Cloudflare Pages + Functions)' }
+    'footer.tagline': { zh: '独立站点 · 独立后端（Cloudflare Pages + Functions）', en: 'Independent site · own backend (Cloudflare Pages + Functions)' },
+    'footer.motto': { zh: '小岛不大，好片管够。', en: 'A small isle — and plenty of good films.' },
+    'footer.main': { zh: '小蓝页（主站）', en: 'Xiaolan (main site)' }
   };
 
   function t(k) {
