@@ -532,3 +532,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }).catch(function () {});
 });
 
+// 页脚年份统一填充（footer 里的 #yr；部分页面没有内联脚本，这里兜底）
+(function () {
+  function fillYear() {
+    var y = document.getElementById('yr');
+    if (y && !y.textContent) y.textContent = new Date().getFullYear();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fillYear);
+  else fillYear();
+})();
+
